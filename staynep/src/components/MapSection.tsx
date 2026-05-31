@@ -14,6 +14,7 @@ import {
   Users,
 } from 'lucide-react';
 import type { TouristMapMarker } from '@/lib/traveler-locations';
+import type { RegisteredHotelMarker } from '@/lib/registered-hotels';
 import { gsap, prefersReducedMotion } from '@/lib/gsap';
 import { hotels } from '@/data/hotels';
 import { attractions } from '@/data/attractions';
@@ -55,7 +56,7 @@ const filters: {
     shortLabel: 'Hotels',
     icon: HotelIcon,
     markerColor: 'bg-blue-500',
-    description: 'Accommodation availability',
+    description: 'Listings + StayNEP registered hotels',
   },
   {
     key: 'attractions',
@@ -99,12 +100,16 @@ const filters: {
   },
 ];
 
-function countForFilter(key: FilterType, touristCount: number): number {
+function countForFilter(
+  key: FilterType,
+  touristCount: number,
+  registeredHotelCount: number
+): number {
   switch (key) {
     case 'tourists':
       return touristCount;
     case 'hotels':
-      return hotels.length;
+      return hotels.length + registeredHotelCount;
     case 'attractions':
       return attractions.length;
     case 'hospitals':
@@ -114,7 +119,13 @@ function countForFilter(key: FilterType, touristCount: number): number {
     case 'shelters':
       return emergencyServices.filter((e) => e.type === 'shelter').length;
     default:
-      return hotels.length + attractions.length + emergencyServices.length;
+      return (
+        hotels.length +
+        registeredHotelCount +
+        attractions.length +
+        emergencyServices.length +
+        touristCount
+      );
   }
 }
 
@@ -141,19 +152,31 @@ export default function MapSection() {
     null
   );
   const [tourists, setTourists] = useState<TouristMapMarker[]>([]);
+  const [registeredHotels, setRegisteredHotels] = useState<RegisteredHotelMarker[]>(
+    []
+  );
   const sectionRef = useRef<HTMLElement>(null);
   const countRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    fetch("/api/travelers/locations")
-      .then((r) => r.json())
-      .then((data) => setTourists(data.tourists ?? []))
-      .catch(() => setTourists([]));
+    Promise.all([
+      fetch("/api/travelers/locations").then((r) => r.json()),
+      fetch("/api/hotels/locations").then((r) => r.json()),
+    ])
+      .then(([travelersData, hotelsData]) => {
+        setTourists(travelersData.tourists ?? []);
+        setRegisteredHotels(hotelsData.hotels ?? []);
+      })
+      .catch(() => {
+        setTourists([]);
+        setRegisteredHotels([]);
+      });
   }, []);
 
   const totalCount = useMemo(
-    () => countForFilter(activeFilter, tourists.length),
-    [activeFilter, tourists.length]
+    () =>
+      countForFilter(activeFilter, tourists.length, registeredHotels.length),
+    [activeFilter, tourists.length, registeredHotels.length]
   );
   const activeMeta = filters.find((f) => f.key === activeFilter)!;
 
@@ -373,7 +396,11 @@ export default function MapSection() {
             <nav className="flex flex-col gap-1.5" aria-label="Map filters">
               {filters.map(({ key, label, icon: Icon, markerColor }) => {
                 const isActive = activeFilter === key;
-                const count = countForFilter(key, tourists.length);
+                const count = countForFilter(
+                  key,
+                  tourists.length,
+                  registeredHotels.length
+                );
                 return (
                   <button
                     key={key}
@@ -471,6 +498,7 @@ export default function MapSection() {
                 nearbyRadiusKm={TRAVELER_NEARBY_RADIUS_KM}
                 enableHotelExplore={activeFilter !== 'tourists'}
                 tourists={tourists}
+                registeredHotels={registeredHotels}
               />
 
               <div className="pointer-events-none absolute bottom-4 left-4 z-[400] max-w-[min(100%,280px)] rounded-[16px] border border-fog bg-snow/95 px-3 py-2 shadow-sm backdrop-blur-md">

@@ -41,13 +41,16 @@ import {
 } from "@/data/saas-authorities";
 import TouristLocationsMap from "@/components/map/TouristLocationsMap";
 import type { TouristMapMarker } from "@/lib/traveler-locations";
+import type { RegisteredHotelMarker } from "@/lib/registered-hotels";
 
 interface AuthoritiesDashboardProps {
   tourists?: TouristMapMarker[];
+  registeredHotels?: RegisteredHotelMarker[];
 }
 
 export default function AuthoritiesDashboard({
   tourists = [],
+  registeredHotels = [],
 }: AuthoritiesDashboardProps) {
   return (
     <div className="space-y-8">
@@ -62,7 +65,11 @@ export default function AuthoritiesDashboard({
           subtitle="GPS locations shared by signed-in StayNEP travelers across Nepal"
           icon={Globe}
         />
-        <TouristLocationsMap initialTourists={tourists} defaultFilter="tourists" />
+        <TouristLocationsMap
+          initialTourists={tourists}
+          initialHotels={registeredHotels}
+          defaultFilter="all"
+        />
       </PortalCard>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -74,7 +81,9 @@ export default function AuthoritiesDashboard({
         />
         <PortalStatCard
           icon={Building2}
-          value={authorityStats.registeredHotels.toLocaleString()}
+          value={String(
+            registeredHotels.length || authorityStats.registeredHotels
+          )}
           label="Registered hotels"
         />
         <PortalStatCard

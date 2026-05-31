@@ -15,6 +15,8 @@ interface HotelSettingsSectionProps {
     district: string;
     address: string | null;
     phone: string | null;
+    latitude: number | null;
+    longitude: number | null;
   };
 }
 
@@ -33,7 +35,7 @@ export default function HotelSettingsSection({
     <div className="space-y-6">
       <PortalSectionTitle
         title="Property profile"
-        subtitle="Hotel details shown across your management portal"
+        subtitle="Hotel details and map pin for StayNEP tourism maps"
         icon={Settings}
       />
       {state.error && <AuthError message={state.error} />}
@@ -87,6 +89,38 @@ export default function HotelSettingsSection({
             className={hotelInputClass}
           />
         </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-obsidian">
+              Latitude (map)
+            </label>
+            <input
+              name="latitude"
+              type="number"
+              step="any"
+              defaultValue={property.latitude ?? ""}
+              placeholder="28.2096"
+              className={hotelInputClass}
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-obsidian">
+              Longitude (map)
+            </label>
+            <input
+              name="longitude"
+              type="number"
+              step="any"
+              defaultValue={property.longitude ?? ""}
+              placeholder="83.9856"
+              className={hotelInputClass}
+            />
+          </div>
+        </div>
+        <p className="text-xs text-steel">
+          Leave blank to place your hotel by district on the map. Set coordinates
+          for an exact pin.
+        </p>
         <button type="submit" disabled={pending} className={hotelSubmitClass}>
           {pending ? "Saving…" : "Save settings"}
         </button>

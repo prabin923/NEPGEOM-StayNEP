@@ -20,6 +20,8 @@ export default async function HotelSettingsPage() {
             district: data.property.district,
             address: data.property.address,
             phone: data.property.phone,
+            latitude: data.property.latitude,
+            longitude: data.property.longitude,
           }}
         />
       </div>

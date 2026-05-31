@@ -17,6 +17,7 @@ import type { Hotel } from '@/data/hotels';
 import type { Attraction } from '@/data/attractions';
 import type { EmergencyService } from '@/data/emergency';
 import type { TouristMapMarker } from '@/lib/traveler-locations';
+import type { RegisteredHotelMarker } from '@/lib/registered-hotels';
 import {
   getWithinRadiusKm,
   formatDistanceKm,
@@ -71,6 +72,12 @@ const icons = {
     24,
     'box-shadow:0 0 0 3px rgba(236,72,153,0.2), 0 4px 12px rgba(9,9,11,0.12);'
   ),
+  registeredHotel: createColorIcon(
+    '#1d4ed8',
+    'rgba(245,158,11,0.6)',
+    26,
+    'box-shadow:0 0 0 3px rgba(245,158,11,0.35), 0 4px 12px rgba(9,9,11,0.15);'
+  ),
 } as const;
 
 export type FilterType =
@@ -94,6 +101,7 @@ interface LeafletMapProps {
   enableHotelExplore?: boolean;
   flyToPosition?: [number, number] | null;
   tourists?: TouristMapMarker[];
+  registeredHotels?: RegisteredHotelMarker[];
 }
 
 function Stars({ rating }: { rating: number }) {
@@ -255,6 +263,7 @@ export default function LeafletMap({
   enableHotelExplore = true,
   flyToPosition = null,
   tourists = [],
+  registeredHotels = [],
 }: LeafletMapProps) {
   const selectedHotel = useMemo(
     () => hotelData.find((h) => h.id === selectedHotelId) ?? null,
@@ -390,6 +399,50 @@ export default function LeafletMap({
               </Marker>
             );
           })}
+
+        {showHotels &&
+          registeredHotels.map((hotel) => (
+            <Marker
+              key={`registered-${hotel.id}`}
+              position={[hotel.lat, hotel.lng]}
+              icon={icons.registeredHotel}
+              zIndexOffset={600}
+            >
+              <Popup>
+                <div className="min-w-[220px] font-cosmica">
+                  <div className="mb-2 flex items-start gap-2">
+                    <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-blue-600 ring-2 ring-amber-400" />
+                    <div>
+                      <h3 className="text-sm font-semibold leading-tight text-obsidian">
+                        {hotel.name}
+                      </h3>
+                      <p className="mt-0.5 text-xs font-medium text-amber-700">
+                        StayNEP registered hotel
+                      </p>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5 border-t border-fog pt-2 text-xs text-steel">
+                    <p>{hotel.district}</p>
+                    {hotel.address && <p>{hotel.address}</p>}
+                    {hotel.phone && (
+                      <p>
+                        <a
+                          href={`tel:${hotel.phone}`}
+                          className="font-medium text-obsidian hover:underline"
+                        >
+                          {hotel.phone}
+                        </a>
+                      </p>
+                    )}
+                    <p className="font-medium text-obsidian">
+                      {hotel.availableUnits} / {hotel.totalUnits} units available ·{' '}
+                      {hotel.roomTypes} room type{hotel.roomTypes === 1 ? '' : 's'}
+                    </p>
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
 
         {showAttractions &&
           attractionData.map((attr) => {

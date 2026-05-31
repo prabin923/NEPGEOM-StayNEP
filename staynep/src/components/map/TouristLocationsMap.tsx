@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import type { TouristMapMarker } from "@/lib/traveler-locations";
+import type { RegisteredHotelMarker } from "@/lib/registered-hotels";
 import { hotels } from "@/data/hotels";
 import { attractions } from "@/data/attractions";
 import { emergencyServices } from "@/data/emergency";
 import type { FilterType } from "@/components/LeafletMap";
-import { Loader2, Users } from "lucide-react";
+import { Loader2, Users, Building2 } from "lucide-react";
 
 const LeafletMap = dynamic(() => import("@/components/LeafletMap"), {
   ssr: false,
@@ -21,6 +22,7 @@ const LeafletMap = dynamic(() => import("@/components/LeafletMap"), {
 interface TouristLocationsMapProps {
   /** Pre-loaded markers (authorities SSR). If omitted, fetches from API. */
   initialTourists?: TouristMapMarker[];
+  initialHotels?: RegisteredHotelMarker[];
   defaultFilter?: FilterType;
   heightClass?: string;
   showTouristCount?: boolean;
@@ -28,25 +30,39 @@ interface TouristLocationsMapProps {
 
 export default function TouristLocationsMap({
   initialTourists,
+  initialHotels,
   defaultFilter = "tourists",
   showTouristCount = true,
 }: TouristLocationsMapProps) {
   const [tourists, setTourists] = useState<TouristMapMarker[]>(
     initialTourists ?? []
   );
-  const [loading, setLoading] = useState(!initialTourists);
+  const [registeredHotels, setRegisteredHotels] = useState<RegisteredHotelMarker[]>(
+    initialHotels ?? []
+  );
+  const [loading, setLoading] = useState(!(initialTourists && initialHotels));
   const [filter, setFilter] = useState<FilterType>(defaultFilter);
 
   useEffect(() => {
-    if (initialTourists) return;
+    if (initialTourists && initialHotels) return;
 
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/travelers/locations");
-        const data = await res.json();
-        if (!cancelled && res.ok) {
-          setTourists(data.tourists ?? []);
+        const [travelersRes, hotelsRes] = await Promise.all([
+          initialTourists
+            ? Promise.resolve(null)
+            : fetch("/api/travelers/locations"),
+          initialHotels ? Promise.resolve(null) : fetch("/api/hotels/locations"),
+        ]);
+        if (cancelled) return;
+        if (travelersRes) {
+          const data = await travelersRes.json();
+          if (travelersRes.ok) setTourists(data.tourists ?? []);
+        }
+        if (hotelsRes) {
+          const data = await hotelsRes.json();
+          if (hotelsRes.ok) setRegisteredHotels(data.hotels ?? []);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -56,26 +72,35 @@ export default function TouristLocationsMap({
     return () => {
       cancelled = true;
     };
-  }, [initialTourists]);
+  }, [initialTourists, initialHotels]);
 
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         {showTouristCount && (
-          <p className="flex items-center gap-2 text-sm text-steel">
-            <Users className="h-4 w-4 text-graphite" />
+          <div className="flex flex-wrap items-center gap-4 text-sm text-steel">
             {loading ? (
-              <>
+              <span className="flex items-center gap-2">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Loading registered travelers…
-              </>
+                Loading map data…
+              </span>
             ) : (
               <>
-                <span className="font-semibold text-obsidian">{tourists.length}</span>
-                signed-in traveler{tourists.length === 1 ? "" : "s"} on map
+                <span className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-graphite" />
+                  <span className="font-semibold text-obsidian">{tourists.length}</span>
+                  traveler{tourists.length === 1 ? "" : "s"}
+                </span>
+                <span className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-blue-600" />
+                  <span className="font-semibold text-obsidian">
+                    {registeredHotels.length}
+                  </span>
+                  registered hotel{registeredHotels.length === 1 ? "" : "s"}
+                </span>
               </>
             )}
-          </p>
+          </div>
         )}
         <div className="flex flex-wrap gap-2">
           {(
@@ -108,6 +133,7 @@ export default function TouristLocationsMap({
           emergencyServices={emergencyServices}
           filter={filter}
           tourists={tourists}
+          registeredHotels={registeredHotels}
           enableHotelExplore={filter !== "tourists"}
         />
       </div>

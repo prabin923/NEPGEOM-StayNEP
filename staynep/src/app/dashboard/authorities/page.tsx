@@ -3,6 +3,7 @@ import AuthoritiesDashboard from "@/components/dashboards/AuthoritiesDashboard";
 import { roleMeta } from "@/lib/auth-helpers";
 import { requireRole } from "@/lib/require-role";
 import { fetchTouristMapMarkers } from "@/lib/traveler-locations";
+import { fetchRegisteredHotelMarkers } from "@/lib/registered-hotels";
 import { prisma } from "@/lib/prisma";
 
 export const metadata = {
@@ -14,12 +15,13 @@ export default async function AuthoritiesPortalPage() {
   const session = await requireRole("AUTHORITIES");
   const user = session.user;
 
-  const [dbUser, tourists] = await Promise.all([
+  const [dbUser, tourists, registeredHotels] = await Promise.all([
     prisma.user.findUnique({
       where: { id: user.id },
       select: { organization: true, name: true },
     }),
     fetchTouristMapMarkers(),
+    fetchRegisteredHotelMarkers(),
   ]);
 
   return (
@@ -28,7 +30,10 @@ export default async function AuthoritiesPortalPage() {
       userLabel={dbUser?.organization ?? user.name ?? "Tourism Authority"}
       userMeta={roleMeta("AUTHORITIES")}
     >
-      <AuthoritiesDashboard tourists={tourists} />
+      <AuthoritiesDashboard
+        tourists={tourists}
+        registeredHotels={registeredHotels}
+      />
     </PortalShell>
   );
 }

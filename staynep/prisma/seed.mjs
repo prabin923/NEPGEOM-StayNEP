@@ -71,6 +71,8 @@ async function main() {
       district: "Kaski",
       address: "Lakeside Road, Ward 6, Pokhara 33700, Nepal",
       phone: "+977 61-520123",
+      latitude: 28.2096,
+      longitude: 83.9856,
     },
     create: {
       ownerId: user.id,
@@ -78,6 +80,8 @@ async function main() {
       district: "Kaski",
       address: "Lakeside Road, Ward 6, Pokhara 33700, Nepal",
       phone: "+977 61-520123",
+      latitude: 28.2096,
+      longitude: 83.9856,
     },
   });
 

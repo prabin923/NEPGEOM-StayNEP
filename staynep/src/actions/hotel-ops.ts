@@ -9,6 +9,7 @@ import type {
 import { auth } from "@/lib/auth";
 import { ensureHotelProperty } from "@/lib/hotel-property";
 import { parseDateInput } from "@/lib/hotel";
+import { isWithinNepal } from "@/lib/traveler-locations";
 import { revalidateHotelDashboard } from "@/lib/hotel-revalidate";
 import { prisma } from "@/lib/prisma";
 
@@ -424,9 +425,24 @@ export async function updateProperty(
   const district = String(formData.get("district") ?? "").trim();
   const address = String(formData.get("address") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
+  const latRaw = String(formData.get("latitude") ?? "").trim();
+  const lngRaw = String(formData.get("longitude") ?? "").trim();
 
   if (!name) return { error: "Property name is required." };
   if (!district) return { error: "District is required." };
+
+  let latitude: number | null = null;
+  let longitude: number | null = null;
+  if (latRaw || lngRaw) {
+    latitude = Number(latRaw);
+    longitude = Number(lngRaw);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return { error: "Map coordinates must be valid numbers." };
+    }
+    if (!isWithinNepal(latitude, longitude)) {
+      return { error: "Coordinates must be within Nepal." };
+    }
+  }
 
   await prisma.property.update({
     where: { id: ctx.property.id },
@@ -435,6 +451,8 @@ export async function updateProperty(
       district,
       address: address || null,
       phone: phone || null,
+      latitude,
+      longitude,
     },
   });
   revalidateHotelDashboard();
