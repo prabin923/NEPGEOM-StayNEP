@@ -6,6 +6,7 @@
     "dev": "next dev",
     "prebuild": "node scripts/reset-build.mjs",
     "build": "next build --webpack",
+    "build:clean": "node scripts/reset-build.mjs --full && next build --webpack",
     "start": "next start",
     "lint": "eslint"
   },
