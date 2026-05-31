@@ -19,18 +19,18 @@ function createColorIcon(color: string, glow: string) {
       width:24px;height:24px;border-radius:50%;
       background:${color};
       border:3px solid #fff;
-      box-shadow:0 0 8px ${glow}, 0 2px 6px rgba(0,0,0,.35);
+      box-shadow:0 0 8px ${glow}, 0 2px 6px rgba(0,0,0,.15);
       transition:transform .15s;
     "></div>`,
   });
 }
 
 const icons = {
-  hotel: createColorIcon('#3B82F6', 'rgba(59,130,246,.5)'),
-  attraction: createColorIcon('#22C55E', 'rgba(34,197,94,.5)'),
-  hospital: createColorIcon('#EF4444', 'rgba(239,68,68,.5)'),
-  police: createColorIcon('#F97316', 'rgba(249,115,22,.5)'),
-  shelter: createColorIcon('#A855F7', 'rgba(168,85,247,.5)'),
+  hotel: createColorIcon('#3B82F6', 'rgba(59,130,246,.3)'),
+  attraction: createColorIcon('#22C55E', 'rgba(34,197,94,.3)'),
+  hospital: createColorIcon('#EF4444', 'rgba(239,68,68,.3)'),
+  police: createColorIcon('#F97316', 'rgba(249,115,22,.3)'),
+  shelter: createColorIcon('#A855F7', 'rgba(168,85,247,.3)'),
 } as const;
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -98,7 +98,7 @@ export default function LeafletMap({
   });
 
   return (
-    <div className="relative rounded-xl border border-white/10 shadow-2xl overflow-hidden">
+    <div className="relative overflow-hidden w-full">
       <MapContainer
         center={[28.3949, 84.124]}
         zoom={7}
@@ -108,7 +108,7 @@ export default function LeafletMap({
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
         />
 
         {/* Hotels */}

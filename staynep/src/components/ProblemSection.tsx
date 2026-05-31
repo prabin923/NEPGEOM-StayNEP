@@ -43,7 +43,15 @@ const challenges: ChallengeCard[] = [
   },
 ];
 
-function ChallengeCardComponent({
+function splitTitle(title: string) {
+  const parts = title.split(' ');
+  if (parts.length <= 2) {
+    return { lead: parts[0], rest: parts.slice(1).join(' ') };
+  }
+  return { lead: parts.slice(0, 2).join(' '), rest: parts.slice(2).join(' ') };
+}
+
+function ChallengeListItem({
   challenge,
   index,
   isVisible,
@@ -53,39 +61,26 @@ function ChallengeCardComponent({
   isVisible: boolean;
 }) {
   const Icon = challenge.icon;
+  const { lead, rest } = splitTitle(challenge.title);
 
   return (
     <div
-      className={`
-        group relative rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm
-        transition-all duration-500 ease-out
-        hover:scale-[1.03] hover:border-[#C9A24A]/40 hover:bg-white/[0.08]
-        hover:shadow-[0_0_30px_rgba(201,162,74,0.12)]
-        ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}
-      `}
+      className={`flex gap-4 items-start transition-all duration-500 ease-out ${
+        isVisible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
+      }`}
       style={{
-        transitionDelay: isVisible ? `${index * 120}ms` : '0ms',
+        transitionDelay: isVisible ? `${index * 100}ms` : '0ms',
       }}
     >
-      {/* Glow effect on hover */}
-      <div
-        className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-        style={{
-          background:
-            'radial-gradient(ellipse at center, rgba(201,162,74,0.06) 0%, transparent 70%)',
-        }}
-      />
-
-      <div className="relative z-10">
-        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-[#C9A24A]/20 bg-[#C9A24A]/10">
-          <Icon className="h-6 w-6 text-[#C9A24A]" strokeWidth={1.8} />
-        </div>
-
-        <h3 className="mb-2 text-lg font-semibold text-white">
-          {challenge.title}
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-graphite">
+        <Icon className="h-5 w-5 text-ash" strokeWidth={1.8} />
+      </div>
+      <div>
+        <h3 className="text-[18px] leading-tight text-snow">
+          <span className="font-light text-ash mr-1">{lead}</span>
+          <span className="font-semibold">{rest}</span>
         </h3>
-
-        <p className="text-sm leading-relaxed text-gray-400">
+        <p className="mt-1.5 text-[14px] leading-relaxed text-steel">
           {challenge.description}
         </p>
       </div>
@@ -108,7 +103,7 @@ export default function ProblemSection() {
           observer.unobserve(section);
         }
       },
-      { threshold: 0.15 }
+      { threshold: 0.1 }
     );
 
     observer.observe(section);
@@ -121,71 +116,34 @@ export default function ProblemSection() {
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden py-24 sm:py-32"
-      style={{
-        background: 'linear-gradient(180deg, #0D1B3E 0%, #0a1428 100%)',
-      }}
+      className="relative bg-obsidian rounded-[36px] mx-4 lg:mx-8 py-20 sm:py-28 overflow-hidden my-8"
     >
-      {/* Background decorative elements */}
-      <div className="pointer-events-none absolute inset-0">
-        {/* Subtle grid pattern */}
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage:
-              'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
-            backgroundSize: '60px 60px',
-          }}
-        />
-        {/* Top-left radial glow */}
-        <div
-          className="absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full opacity-20"
-          style={{
-            background:
-              'radial-gradient(circle, rgba(201,162,74,0.15) 0%, transparent 70%)',
-          }}
-        />
-        {/* Bottom-right radial glow */}
-        <div
-          className="absolute -bottom-40 -right-40 h-[500px] w-[500px] rounded-full opacity-20"
-          style={{
-            background:
-              'radial-gradient(circle, rgba(13,27,62,0.8) 0%, transparent 70%)',
-          }}
-        />
-      </div>
-
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto max-w-[1200px] px-6 sm:px-8">
         {/* Section header */}
         <div
-          className={`mx-auto mb-16 max-w-3xl text-center transition-all duration-700 ease-out sm:mb-20 ${
+          className={`mb-16 max-w-3xl transition-all duration-700 ease-out sm:mb-20 ${
             isVisible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
           }`}
         >
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#C9A24A]/20 bg-[#C9A24A]/10 px-4 py-1.5 text-xs font-medium uppercase tracking-widest text-[#C9A24A]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#C9A24A]" />
+          <div className="mb-4 inline-flex items-center gap-2 rounded-[12px] border border-white/20 px-3 py-1 text-[12px] font-medium text-snow">
             The Problem
           </div>
 
-          <h2 className="mb-6 text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
-            The Challenges in Nepal&apos;s{' '}
-            <span className="bg-gradient-to-r from-[#C9A24A] to-[#e8c96a] bg-clip-text text-transparent">
-              Tourism Landscape
-            </span>
+          <h2 className="mb-6 text-[32px] font-bold tracking-tight text-snow leading-none">
+            The Challenges in Nepal&apos;s Tourism Landscape
           </h2>
 
-          <p className="text-base leading-relaxed text-gray-400 sm:text-lg">
+          <p className="text-[16px] leading-[1.5] text-ash max-w-2xl font-light">
             Nepal&apos;s tourism ecosystem remains fragmented — with disconnected
-            accommodation listings, limited safety infrastructure, and no
-            centralized intelligence platform to unify the travel experience for
-            millions of visitors each year.
+            listings, limited safety infrastructure, and no centralized
+            intelligence platform to unify the travel experience.
           </p>
         </div>
 
-        {/* Challenge cards grid */}
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Challenges list */}
+        <div className="grid grid-cols-1 gap-x-12 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
           {challenges.map((challenge, index) => (
-            <ChallengeCardComponent
+            <ChallengeListItem
               key={challenge.title}
               challenge={challenge}
               index={index}
@@ -196,17 +154,16 @@ export default function ProblemSection() {
 
         {/* Bottom callout */}
         <div
-          className={`mt-14 flex items-center justify-center transition-all duration-700 ease-out sm:mt-16 ${
+          className={`mt-16 flex transition-all duration-700 ease-out ${
             isVisible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
           }`}
-          style={{ transitionDelay: isVisible ? '800ms' : '0ms' }}
+          style={{ transitionDelay: isVisible ? '600ms' : '0ms' }}
         >
-          <div className="inline-flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-6 py-3 backdrop-blur-sm">
-            <div className="h-2 w-2 animate-pulse rounded-full bg-red-400" />
-            <p className="text-sm text-gray-300">
+          <div className="inline-flex items-center gap-3 rounded-[12px] border border-white/10 bg-transparent px-4 py-2.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-ember" />
+            <p className="text-[14px] text-ash font-light">
               These challenges cost Nepal&apos;s tourism industry an estimated{' '}
-              <span className="font-semibold text-white">$200M+ annually</span>{' '}
-              in lost revenue
+              <span className="font-semibold text-snow">$200M+ annually</span> in lost revenue.
             </p>
           </div>
         </div>

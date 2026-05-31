@@ -71,25 +71,25 @@ const socialLinks = [
 
 export default function Footer() {
   return (
-    <footer className="relative bg-[#060e24]">
-      <div className="mx-auto max-w-7xl px-6 pb-8 pt-16 lg:px-8 lg:pt-24">
+    <footer className="relative bg-obsidian rounded-t-[36px] pt-16 pb-8 px-6 mt-8">
+      <div className="mx-auto max-w-[1200px]">
         {/* Top Section */}
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-8">
           {/* Brand Column */}
           <div className="lg:col-span-4">
             {/* Logo */}
             <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#C9A24A]/10 ring-1 ring-[#C9A24A]/20">
-                <MapPin className="h-5 w-5 text-[#C9A24A]" strokeWidth={1.8} />
+              <div className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-graphite">
+                <MapPin className="h-5 w-5 text-snow" strokeWidth={1.8} />
               </div>
-              <span className="text-xl font-bold text-white">
-                Stay<span className="text-[#C9A24A]">NEP</span>
+              <span className="text-xl font-bold text-snow font-cosmica tracking-tight">
+                StayNEP
               </span>
             </div>
 
             {/* Tagline */}
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/50">
-              When Location Becomes the Solution
+            <p className="mt-4 max-w-xs text-[14px] leading-relaxed text-ash font-cosmica font-light">
+              When Location Becomes the Solution.
             </p>
 
             {/* Social Icons */}
@@ -101,7 +101,7 @@ export default function Footer() {
                     key={social.label}
                     href={social.href}
                     aria-label={social.label}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-white/40 transition-all duration-200 hover:border-[#C9A24A]/30 hover:bg-[#C9A24A]/10 hover:text-[#C9A24A]"
+                    className="flex h-9 w-9 items-center justify-center rounded-[12px] border border-white/10 bg-transparent text-ash hover:border-white/30 hover:text-snow transition-colors duration-200"
                   >
                     <Icon className="h-4 w-4" strokeWidth={1.8} />
                   </a>
@@ -114,7 +114,7 @@ export default function Footer() {
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:col-span-6 lg:col-start-7">
             {columns.map((column) => (
               <div key={column.title}>
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-white/70">
+                <h3 className="text-[13px] font-semibold uppercase tracking-wider text-pebble font-cosmica">
                   {column.title}
                 </h3>
                 <ul className="mt-4 space-y-3">
@@ -122,7 +122,7 @@ export default function Footer() {
                     <li key={link.label}>
                       <a
                         href={link.href}
-                        className="text-sm text-white/40 transition-colors duration-200 hover:text-[#C9A24A]"
+                        className="text-[14px] text-ash font-cosmica hover:text-snow transition-colors duration-200"
                       >
                         {link.label}
                       </a>
@@ -135,14 +135,14 @@ export default function Footer() {
         </div>
 
         {/* Divider */}
-        <div className="mt-14 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        <div className="mt-14 h-px bg-graphite" />
 
         {/* Bottom Section */}
         <div className="mt-8 flex flex-col items-center justify-between gap-4 sm:flex-row">
-          <p className="text-xs text-white/30">
+          <p className="text-[12px] text-steel font-cosmica">
             © 2025 StayNEP Tourism Intelligence Network. All rights reserved.
           </p>
-          <p className="text-xs text-white/30">
+          <p className="text-[12px] text-steel font-cosmica">
             Built for Nepal 🇳🇵
           </p>
         </div>

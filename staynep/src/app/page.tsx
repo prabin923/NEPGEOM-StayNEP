@@ -16,21 +16,11 @@ export default function Home() {
       <Hero />
       <ProblemSection />
       <SolutionSection />
-      <section id="map">
-        <MapSection />
-      </section>
-      <section id="dashboard">
-        <DashboardSection />
-      </section>
-      <section id="features">
-        <FeaturesSection />
-      </section>
-      <section id="impact">
-        <ImpactSection />
-      </section>
-      <section id="roadmap">
-        <FutureVision />
-      </section>
+      <MapSection />
+      <DashboardSection />
+      <FeaturesSection />
+      <ImpactSection />
+      <FutureVision />
       <Footer />
     </main>
   );

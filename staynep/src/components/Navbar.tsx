@@ -38,26 +38,25 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ${
         scrolled
-          ? 'bg-[#0D1B3E]/80 backdrop-blur-xl border-b border-white/10 shadow-lg shadow-black/10'
+          ? 'bg-snow/80 backdrop-blur-xl border-b border-fog shadow-sm'
           : 'bg-transparent border-b border-transparent'
       }`}
     >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between lg:h-20">
           {/* Logo */}
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="group flex items-center gap-2 outline-none"
+            className="group flex items-center gap-2 outline-none cursor-pointer"
             aria-label="Scroll to top"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#C9A24A]/15 ring-1 ring-[#C9A24A]/30 transition-all duration-300 group-hover:bg-[#C9A24A]/25 group-hover:ring-[#C9A24A]/50">
-              <MapPin className="h-5 w-5 text-[#C9A24A]" />
+            <span className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-fog transition-transform duration-200 active:scale-95">
+              <MapPin className="h-5 w-5 text-graphite" />
             </span>
-            <span className="text-xl font-bold tracking-tight lg:text-2xl">
-              <span className="text-white">Stay</span>
-              <span className="text-[#C9A24A]">NEP</span>
+            <span className="text-xl font-bold tracking-tight lg:text-2xl font-cosmica text-obsidian">
+              StayNEP
             </span>
           </button>
 
@@ -67,10 +66,10 @@ export default function Navbar() {
               <button
                 key={link.href}
                 onClick={() => scrollTo(link.href)}
-                className="relative rounded-lg px-4 py-2 text-sm font-medium text-white/70 transition-colors duration-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A24A]/50"
+                className="group relative rounded-lg px-4 py-2 text-sm font-medium text-ink/75 hover:text-obsidian focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-obsidian/50 cursor-pointer"
               >
                 {link.label}
-                <span className="absolute inset-x-4 -bottom-px h-px scale-x-0 bg-[#C9A24A] transition-transform duration-300 group-hover:scale-x-100" />
+                <span className="absolute inset-x-4 bottom-1 h-px scale-x-0 bg-obsidian transition-transform duration-200 group-hover:scale-x-100" />
               </button>
             ))}
           </div>
@@ -79,22 +78,22 @@ export default function Navbar() {
           <div className="hidden items-center gap-3 md:flex">
             <Link
               href="/dashboard"
-              className="rounded-lg px-4 py-2.5 text-sm font-medium text-white/70 transition hover:text-white"
+              className="rounded-lg px-4 py-2.5 text-sm font-medium text-ink/75 transition hover:text-obsidian"
             >
               Portals
             </Link>
             <Link
               href="/dashboard"
-              className="relative overflow-hidden rounded-lg bg-[#C9A24A] px-5 py-2.5 text-sm font-semibold text-[#0D1B3E] shadow-lg shadow-[#C9A24A]/20 transition-all duration-300 hover:bg-[#d4af5a] hover:shadow-[#C9A24A]/30 hover:-translate-y-0.5"
+              className="relative rounded-[36px] bg-obsidian px-5 py-2.5 text-sm font-medium text-snow shadow-button transition-transform duration-200 active:scale-95"
             >
-              <span className="relative z-10">Get Started</span>
+              Get Started
             </Link>
           </div>
 
           {/* Mobile hamburger */}
           <button
             onClick={() => setMobileOpen((v) => !v)}
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-white/80 transition-colors hover:bg-white/10 hover:text-white md:hidden"
+            className="flex h-10 w-10 items-center justify-center rounded-[12px] text-ink transition-transform duration-200 active:scale-95 md:hidden cursor-pointer"
             aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -104,7 +103,7 @@ export default function Navbar() {
 
       {/* Mobile overlay menu */}
       <div
-        className={`fixed inset-0 top-16 z-40 transition-all duration-300 md:hidden ${
+        className={`fixed inset-0 top-16 z-40 md:hidden ${
           mobileOpen
             ? 'visible opacity-100'
             : 'invisible opacity-0 pointer-events-none'
@@ -112,13 +111,13 @@ export default function Navbar() {
       >
         {/* Backdrop */}
         <div
-          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          className="absolute inset-0 bg-obsidian/20 backdrop-blur-sm"
           onClick={() => setMobileOpen(false)}
         />
 
         {/* Panel */}
         <div
-          className={`relative mx-4 mt-2 overflow-hidden rounded-2xl border border-white/10 bg-[#0D1B3E]/95 backdrop-blur-xl shadow-2xl transition-all duration-300 ${
+          className={`relative mx-4 mt-2 overflow-hidden rounded-[28px] border border-fog bg-snow/95 backdrop-blur-xl shadow-md transition-transform duration-300 ${
             mobileOpen ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'
           }`}
         >
@@ -127,15 +126,15 @@ export default function Navbar() {
               <button
                 key={link.href}
                 onClick={() => scrollTo(link.href)}
-                className="rounded-xl px-4 py-3 text-left text-base font-medium text-white/80 transition-colors hover:bg-white/5 hover:text-white"
+                className="rounded-xl px-4 py-3 text-left text-base font-medium text-ink/80 hover:text-obsidian hover:bg-fog/50 cursor-pointer"
               >
                 {link.label}
               </button>
             ))}
-            <div className="my-2 h-px bg-white/10" />
+            <div className="my-2 h-px bg-fog" />
             <Link
               href="/dashboard"
-              className="rounded-xl bg-[#C9A24A] px-4 py-3 text-center text-base font-semibold text-[#0D1B3E] transition-colors hover:bg-[#d4af5a]"
+              className="rounded-[36px] bg-obsidian px-4 py-3 text-center text-base font-medium text-snow shadow-button"
               onClick={() => setMobileOpen(false)}
             >
               Open Portals

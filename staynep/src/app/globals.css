@@ -1,133 +1,113 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300;1,9..40,400;1,9..40,500&display=swap");
 @import "tailwindcss";
 
 /* Keep Tailwind from scanning outside this app (wrong monorepo root = hung builds). */
 @source "../**/*.{ts,tsx}";
 
+/* ─── Tailwind v4 Theme Tokens ─── */
 @theme inline {
-  --color-navy: #0D1B3E;
-  --color-navy-dark: #060e24;
-  --color-navy-light: #152550;
-  --color-gold: #C9A24A;
-  --color-gold-light: #d4b76b;
-  --color-gold-dark: #a8862f;
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    sans-serif;
+  /* Colors — Neutral Scale */
+  --color-obsidian: #09090b;
+  --color-ink: #18181b;
+  --color-graphite: #3f3f46;
+  --color-slate: #52525b;
+  --color-steel: #71717a;
+  --color-ash: #a1a1aa;
+  --color-pebble: #d4d4d8;
+  --color-fog: #ececee;
+  --color-mist: #f4f4f5;
+  --color-snow: #ffffff;
+
+  /* Colors — Accent (scarce by design) */
+  --color-ember: #ff5a00;
+  --color-orchid-flash: #fe45e2;
+
+  /* Typography */
+  --font-cosmica: "DM Sans", ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
+/* ─── CSS Custom Properties ─── */
 :root {
-  --background: #0D1B3E;
-  --foreground: #ffffff;
+  /* Surfaces */
+  --surface-canvas: #f4f4f5;
+  --surface-card-white: #ffffff;
+  --surface-card-muted: #ececee;
+  --surface-dark: #09090b;
+
+  /* Shadows (used sparingly) */
+  --shadow-button: rgba(255, 255, 255, 0.5) 0px 0.5px 0px 0px inset,
+    rgba(117, 123, 133, 0.4) 0px 9px 14px -5px inset,
+    rgb(44, 46, 52) 0px 0px 0px 1.5px, rgba(0, 0, 0, 0.14) 0px 4px 6px 0px;
+  --shadow-card-inset: rgb(228, 228, 231) 0px 1px 0px 0px inset;
+  --shadow-md: rgba(0, 0, 0, 0.04) 0px 4px 12px 0px;
 }
 
+/* ─── Base Styles ─── */
 * {
   scroll-behavior: smooth;
 }
 
 body {
-  background: #0D1B3E;
-  color: #ffffff;
-  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  background: var(--surface-canvas);
+  color: #18181b;
+  font-family: var(--font-cosmica);
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Glassmorphism utility */
-.glass {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+/* ─── Selection ─── */
+::selection {
+  background: rgba(9, 9, 11, 0.12);
+  color: #09090b;
 }
 
-.glass-strong {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-/* Custom scrollbar */
+/* ─── Custom Scrollbar ─── */
 ::-webkit-scrollbar {
   width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #060e24;
+  background: #f4f4f5;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(201, 162, 74, 0.3);
-  border-radius: 3px;
+  background: #d4d4d8;
+  border-radius: 10000px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(201, 162, 74, 0.5);
+  background: #a1a1aa;
 }
 
-/* Floating animation */
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-20px);
-  }
-}
+/* ─── Animations ─── */
 
-@keyframes float-slow {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-@keyframes pulse-glow {
-  0%, 100% {
-    opacity: 0.4;
-    box-shadow: 0 0 20px rgba(201, 162, 74, 0.2);
-  }
-  50% {
-    opacity: 0.8;
-    box-shadow: 0 0 40px rgba(201, 162, 74, 0.4);
-  }
-}
-
-@keyframes gradient-shift {
+/* Continuous horizontal scroll (logo strip, portfolio) */
+@keyframes scroll-left {
   0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
+    transform: translateX(0);
   }
   100% {
-    background-position: 0% 50%;
+    transform: translateX(-50%);
   }
 }
 
-.animate-float {
-  animation: float 6s ease-in-out infinite;
+@keyframes scroll-right {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 
-.animate-float-slow {
-  animation: float-slow 8s ease-in-out infinite;
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 3s ease-in-out infinite;
-}
-
-.animate-gradient {
-  background-size: 200% 200%;
-  animation: gradient-shift 8s ease infinite;
-}
-
-/* Fade in animation */
+/* Fade in up (entrance) */
 @keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateY(24px);
   }
   to {
     opacity: 1;
@@ -135,63 +115,109 @@ body {
   }
 }
 
+/* Mild overshoot spring entrance */
+@keyframes spring-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Subtle pulse for live indicators */
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+}
+
 .animate-fade-in-up {
-  animation: fade-in-up 0.6s ease-out forwards;
+  animation: fade-in-up 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
-/* Dot grid pattern */
-.dot-pattern {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-  background-size: 30px 30px;
+.animate-spring-in {
+  animation: spring-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
-/* Map container fixes */
+.animate-scroll-left {
+  animation: scroll-left 50s linear infinite;
+}
+
+.animate-scroll-right {
+  animation: scroll-right 50s linear infinite;
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* ─── Map container fixes (Leaflet) ─── */
 .leaflet-container {
-  background: #0a1428 !important;
-  border-radius: 12px;
+  background: #f4f4f5 !important;
+  border-radius: 28px;
 }
 
 .leaflet-popup-content-wrapper {
-  background: rgba(13, 27, 62, 0.95) !important;
+  background: rgba(255, 255, 255, 0.97) !important;
   backdrop-filter: blur(12px) !important;
-  color: #fff !important;
-  border: 1px solid rgba(201, 162, 74, 0.3) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
+  color: #18181b !important;
+  border: 1px solid #ececee !important;
+  border-radius: 16px !important;
+  box-shadow: rgba(0, 0, 0, 0.04) 0px 4px 12px 0px !important;
 }
 
 .leaflet-popup-content {
-  color: #fff !important;
+  color: #18181b !important;
   margin: 12px 16px !important;
+  font-family: var(--font-cosmica);
 }
 
 .leaflet-popup-tip {
-  background: rgba(13, 27, 62, 0.95) !important;
-  border: 1px solid rgba(201, 162, 74, 0.3) !important;
+  background: rgba(255, 255, 255, 0.97) !important;
+  border: 1px solid #ececee !important;
 }
 
 .leaflet-popup-close-button {
-  color: #C9A24A !important;
+  color: #71717a !important;
 }
 
-/* Recharts custom styling */
+/* ─── Recharts custom styling ─── */
 .recharts-default-tooltip {
-  background: rgba(13, 27, 62, 0.95) !important;
-  border: 1px solid rgba(201, 162, 74, 0.3) !important;
-  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.97) !important;
+  border: 1px solid #ececee !important;
+  border-radius: 12px !important;
   backdrop-filter: blur(12px) !important;
 }
 
 .recharts-tooltip-label {
-  color: #C9A24A !important;
+  color: #09090b !important;
+  font-weight: 600 !important;
 }
 
 .recharts-tooltip-item {
-  color: #fff !important;
+  color: #3f3f46 !important;
 }
 
-/* Selection color */
-::selection {
-  background: rgba(201, 162, 74, 0.3);
-  color: #fff;
+/* ─── Glassmorphism utility (light variant) ─── */
+.glass {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.glass-dark {
+  background: rgba(9, 9, 11, 0.85);
+  backdrop-filter: blur(17px);
+  -webkit-backdrop-filter: blur(17px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }

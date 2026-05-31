@@ -18,8 +18,8 @@ import type { FilterType } from './LeafletMap';
 const LeafletMap = dynamic(() => import('./LeafletMap'), {
   ssr: false,
   loading: () => (
-    <div className="h-[500px] rounded-xl bg-white/5 animate-pulse flex items-center justify-center">
-      <span className="text-gray-400">Loading map...</span>
+    <div className="h-[500px] rounded-[36px] border border-fog bg-snow animate-pulse flex items-center justify-center">
+      <span className="text-steel">Loading map...</span>
     </div>
   ),
 });
@@ -34,12 +34,12 @@ const filters: { key: FilterType; label: string; icon: React.ElementType }[] = [
 ];
 
 const dotColors: Record<FilterType, string> = {
-  all: 'bg-white',
-  hotels: 'bg-blue-400',
-  attractions: 'bg-green-400',
-  hospitals: 'bg-red-400',
-  police: 'bg-orange-400',
-  shelters: 'bg-purple-400',
+  all: 'bg-obsidian',
+  hotels: 'bg-blue-500',
+  attractions: 'bg-green-500',
+  hospitals: 'bg-red-500',
+  police: 'bg-orange-500',
+  shelters: 'bg-purple-500',
 };
 
 export default function MapSection() {
@@ -65,35 +65,22 @@ export default function MapSection() {
   return (
     <section
       id="map"
-      className="relative py-24 px-4 sm:px-6 lg:px-8"
-      style={{ background: 'linear-gradient(180deg, #0D1B3E 0%, #091428 100%)' }}
+      className="relative bg-mist py-20 px-4 sm:px-6 lg:px-8"
     >
-      {/* Subtle grid overlay */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage:
-            'linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)',
-          backgroundSize: '64px 64px',
-        }}
-      />
-
-      <div className="relative mx-auto max-w-7xl">
+      <div className="relative mx-auto max-w-[1200px]">
         {/* ── Heading ───────────────────────────────────────────────────── */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 mb-4 rounded-full border border-[#C9A24A]/30 bg-[#C9A24A]/10 px-4 py-1.5">
-            <MapPin className="h-4 w-4 text-[#C9A24A]" />
-            <span className="text-xs font-medium tracking-wide text-[#C9A24A] uppercase">
+          <div className="inline-flex items-center gap-2 mb-4 rounded-full border border-fog bg-snow px-4 py-1.5">
+            <MapPin className="h-4 w-4 text-steel" />
+            <span className="text-[12px] font-medium tracking-tight text-steel uppercase">
               Interactive Explorer
             </span>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight">
-            Explore Nepal&apos;s Tourism{' '}
-            <span className="text-[#C9A24A]">Network</span>
+          <h2 className="text-[32px] font-bold text-obsidian mb-4 tracking-tight font-cosmica leading-none">
+            Explore Nepal&apos;s Tourism <span className="text-ash">Network</span>
           </h2>
-          <p className="mx-auto max-w-2xl text-base sm:text-lg text-gray-400 leading-relaxed">
-            Interactive map showing hotels, attractions, and emergency services
-            across all 7 provinces
+          <p className="mx-auto max-w-2xl text-[16px] text-steel leading-relaxed font-cosmica">
+            Interactive map showing hotels, attractions, and emergency services across all 7 provinces.
           </p>
         </div>
 
@@ -107,19 +94,19 @@ export default function MapSection() {
                 onClick={() => setActiveFilter(key)}
                 aria-pressed={isActive}
                 className={`
-                  group relative inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium
+                  group inline-flex items-center gap-2 rounded-[36px] px-4 py-2 text-sm font-medium
                   transition-all duration-200 cursor-pointer
                   ${
                     isActive
-                      ? 'bg-[#C9A24A] text-[#0D1B3E] shadow-lg shadow-[#C9A24A]/25'
-                      : 'border border-white/15 text-gray-300 hover:border-white/30 hover:text-white hover:bg-white/5'
+                      ? 'bg-obsidian text-snow shadow-button'
+                      : 'bg-snow text-graphite border border-fog hover:bg-fog'
                   }
                 `}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-4 w-4 text-current" />
                 {label}
                 {isActive && (
-                  <span className="ml-1 inline-flex items-center justify-center rounded-full bg-[#0D1B3E]/20 px-1.5 py-0.5 text-[10px] font-bold leading-none">
+                  <span className="ml-1 inline-flex items-center justify-center rounded-full bg-snow/20 px-1.5 py-0.5 text-[10px] font-bold leading-none text-snow">
                     {totalCount}
                   </span>
                 )}
@@ -129,35 +116,37 @@ export default function MapSection() {
         </div>
 
         {/* ── Map ───────────────────────────────────────────────────────── */}
-        <LeafletMap
-          hotels={hotels}
-          attractions={attractions}
-          emergencyServices={emergencyServices}
-          filter={activeFilter}
-        />
+        <div className="rounded-[36px] overflow-hidden border border-fog">
+          <LeafletMap
+            hotels={hotels}
+            attractions={attractions}
+            emergencyServices={emergencyServices}
+            filter={activeFilter}
+          />
+        </div>
 
         {/* ── Summary Bar ───────────────────────────────────────────────── */}
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-sm px-6 py-4">
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-[28px] bg-snow px-6 py-4 border-none">
           <div className="flex items-center gap-3">
-            <div className={`h-2.5 w-2.5 rounded-full ${dotColors[activeFilter]} animate-pulse`} />
-            <p className="text-sm text-gray-300">
+            <div className={`h-2.5 w-2.5 rounded-full ${dotColors[activeFilter]} animate-pulse-dot`} />
+            <p className="text-sm text-steel font-cosmica">
               Showing{' '}
-              <span className="font-semibold text-white">{totalCount}</span>{' '}
+              <span className="font-semibold text-obsidian">{totalCount}</span>{' '}
               {activeFilter === 'all' ? 'locations' : activeFilter} on the map
             </p>
           </div>
 
           {/* Legend */}
-          <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
+          <div className="flex flex-wrap items-center gap-4 text-[12px] text-steel font-cosmica">
             {[
-              { label: 'Hotels', color: 'bg-blue-400' },
-              { label: 'Attractions', color: 'bg-green-400' },
-              { label: 'Hospitals', color: 'bg-red-400' },
-              { label: 'Police', color: 'bg-orange-400' },
-              { label: 'Shelters', color: 'bg-purple-400' },
+              { label: 'Hotels', color: 'bg-blue-500' },
+              { label: 'Attractions', color: 'bg-green-500' },
+              { label: 'Hospitals', color: 'bg-red-500' },
+              { label: 'Police', color: 'bg-orange-500' },
+              { label: 'Shelters', color: 'bg-purple-500' },
             ].map((item) => (
               <span key={item.label} className="inline-flex items-center gap-1.5">
-                <span className={`h-2 w-2 rounded-full ${item.color}`} />
+                <span className={`h-1.5 w-1.5 rounded-full ${item.color}`} />
                 {item.label}
               </span>
             ))}
