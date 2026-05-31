@@ -244,8 +244,7 @@ Dashboard & Insights
 
 ## Database
 
-- PostgreSQL
-- PostGIS
+- Prisma
 
 ## GIS & Mapping
 
@@ -388,14 +387,4 @@ By integrating GIS, tourism operations, safety monitoring, and accommodation dat
 
 ---
 
-## 🌟 Tagline
 
-**"Connecting Tourism Through Location Intelligence."**
-
-**"When Location Becomes the Solution."**
-
----
-
-### Developed for Geo-Ideathon & Tourism Innovation
-
-**StayNEP — Building the Future of Smart Tourism in Nepal.**
