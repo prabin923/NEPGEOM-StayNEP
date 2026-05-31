@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { ArrowRight, Compass } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -282,13 +283,13 @@ export default function Hero() {
             Explore Map
             <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
           </button>
-          <button
-            onClick={() => scrollTo('dashboard')}
+          <Link
+            href="/dashboard"
             className="group inline-flex items-center gap-2 rounded-xl border border-[#C9A24A]/40 bg-transparent px-7 py-3.5 text-sm font-semibold text-[#C9A24A] transition-all duration-300 hover:border-[#C9A24A] hover:bg-[#C9A24A]/10 hover:-translate-y-0.5"
           >
-            View Dashboard
+            Open Portals
             <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-          </button>
+          </Link>
         </div>
 
         {/* Map preview card */}

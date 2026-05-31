@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
 import { MapPin, Menu, X } from 'lucide-react';
 
@@ -76,13 +77,18 @@ export default function Navbar() {
 
           {/* Desktop CTA */}
           <div className="hidden items-center gap-3 md:flex">
-            <button
-              onClick={() => scrollTo('map')}
-              className="relative overflow-hidden rounded-lg bg-[#C9A24A] px-5 py-2.5 text-sm font-semibold text-[#0D1B3E] shadow-lg shadow-[#C9A24A]/20 transition-all duration-300 hover:bg-[#d4af5a] hover:shadow-[#C9A24A]/30 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A24A]/50"
+            <Link
+              href="/dashboard"
+              className="rounded-lg px-4 py-2.5 text-sm font-medium text-white/70 transition hover:text-white"
+            >
+              Portals
+            </Link>
+            <Link
+              href="/dashboard"
+              className="relative overflow-hidden rounded-lg bg-[#C9A24A] px-5 py-2.5 text-sm font-semibold text-[#0D1B3E] shadow-lg shadow-[#C9A24A]/20 transition-all duration-300 hover:bg-[#d4af5a] hover:shadow-[#C9A24A]/30 hover:-translate-y-0.5"
             >
               <span className="relative z-10">Get Started</span>
-              <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 hover:translate-x-full" />
-            </button>
+            </Link>
           </div>
 
           {/* Mobile hamburger */}
@@ -127,12 +133,13 @@ export default function Navbar() {
               </button>
             ))}
             <div className="my-2 h-px bg-white/10" />
-            <button
-              onClick={() => scrollTo('map')}
+            <Link
+              href="/dashboard"
               className="rounded-xl bg-[#C9A24A] px-4 py-3 text-center text-base font-semibold text-[#0D1B3E] transition-colors hover:bg-[#d4af5a]"
+              onClick={() => setMobileOpen(false)}
             >
-              Get Started
-            </button>
+              Open Portals
+            </Link>
           </div>
         </div>
       </div>
