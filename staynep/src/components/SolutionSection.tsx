@@ -166,7 +166,7 @@ function EcosystemDiagram({ isVisible }: { isVisible: boolean }) {
       </div>
 
       {/* Keyframe styles for traveling dots */}
-      <style jsx>{`
+      <style>{`
         @keyframes pulse-ring {
           0%, 100% {
             transform: scale(1);
