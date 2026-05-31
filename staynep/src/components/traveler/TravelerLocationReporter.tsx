@@ -1,28 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MapPin, Loader2 } from "lucide-react";
+import { MapPin, Loader2, RefreshCw } from "lucide-react";
 
 type Status = "idle" | "loading" | "shared" | "denied" | "error";
 
-/**
- * Shares the signed-in traveler's GPS position with StayNEP for map display.
- */
 export default function TravelerLocationReporter() {
   const [status, setStatus] = useState<Status>("idle");
   const [label, setLabel] = useState<string | null>(null);
   const reported = useRef(false);
 
-  useEffect(() => {
-    if (reported.current) return;
+  function shareLocation() {
     if (!navigator.geolocation) {
       setStatus("error");
       return;
     }
-
-    reported.current = true;
     setStatus("loading");
-
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude: lat, longitude: lng } = pos.coords;
@@ -46,35 +39,59 @@ export default function TravelerLocationReporter() {
       () => setStatus("denied"),
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 60_000 }
     );
+  }
+
+  useEffect(() => {
+    if (reported.current) return;
+    reported.current = true;
+    shareLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount
   }, []);
 
-  if (status === "idle" || status === "loading") {
+  if (status === "loading" || status === "idle") {
     return (
-      <p className="flex items-center gap-2 rounded-[12px] border border-fog bg-mist/50 px-3 py-2 text-xs text-steel">
+      <div className="flex shrink-0 items-center gap-2 rounded-full border border-fog bg-snow px-4 py-2 text-xs text-steel shadow-sm">
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        Sharing your location on the Nepal map…
-      </p>
+        Syncing GPS…
+      </div>
     );
   }
 
   if (status === "shared") {
     return (
-      <p className="flex items-center gap-2 rounded-[12px] border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+      <div className="flex max-w-xs shrink-0 items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs text-emerald-900 shadow-sm">
         <MapPin className="h-3.5 w-3.5 shrink-0" />
-        Your location is visible on StayNEP maps
-        {label ? ` · ${label}` : ""}
-      </p>
+        <span className="truncate">
+          On map{label ? ` · ${label}` : ""}
+        </span>
+      </div>
     );
   }
 
   if (status === "denied") {
     return (
-      <p className="rounded-[12px] border border-fog bg-mist/50 px-3 py-2 text-xs text-steel">
-        Location permission denied. Enable location in your browser to appear on
-        the tourism map.
-      </p>
+      <button
+        type="button"
+        onClick={() => {
+          reported.current = false;
+          shareLocation();
+        }}
+        className="flex shrink-0 items-center gap-2 rounded-full border border-fog bg-snow px-4 py-2 text-xs font-medium text-graphite shadow-sm hover:bg-mist"
+      >
+        <RefreshCw className="h-3.5 w-3.5" />
+        Enable location
+      </button>
     );
   }
 
-  return null;
+  return (
+    <button
+      type="button"
+      onClick={shareLocation}
+      className="flex shrink-0 items-center gap-2 rounded-full border border-fog bg-snow px-4 py-2 text-xs font-medium text-graphite shadow-sm hover:bg-mist"
+    >
+      <RefreshCw className="h-3.5 w-3.5" />
+      Retry GPS
+    </button>
+  );
 }

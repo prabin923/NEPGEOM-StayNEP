@@ -2,13 +2,17 @@
 
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Compass,
   Heart,
   Shield,
   MapPin,
-  Calendar,
   Bell,
+  Building2,
+  Calendar,
+  FileWarning,
 } from "lucide-react";
 import type { Hotel } from "@/data/hotels";
 import type { Attraction } from "@/data/attractions";
@@ -17,36 +21,28 @@ import {
   TRAVELER_NEARBY_RADIUS_KM,
 } from "@/lib/geo";
 import NearbyDestinationsPanel from "@/components/map/NearbyDestinationsPanel";
-import TouristWeatherBoard from "@/components/weather/TouristWeatherBoard";
 import TouristWeatherWidget from "@/components/weather/TouristWeatherWidget";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
 import PortalStatCard from "@/components/portal/PortalStatCard";
 import TravelerLocationReporter from "@/components/traveler/TravelerLocationReporter";
+import TravelerReportSection from "@/components/traveler/TravelerReportSection";
+import TravelerBookStay from "@/components/traveler/TravelerBookStay";
+import HotelMapAiBooking from "@/components/traveler/HotelMapAiBooking";
+import type { BookableProperty, TravelerBookingRow } from "@/lib/traveler-bookings";
+import type { RegisteredHotelMarker } from "@/lib/registered-hotels";
+import { fromCatalogHotel, type MapHotelSelection } from "@/lib/map-hotel-selection";
+import { formatNpr } from "@/lib/traveler-bookings";
+import type { ReportCategory, ReportStatus } from "@prisma/client";
 import {
   PortalPageHeader,
   PortalCard,
   PortalSectionTitle,
   PortalInnerCard,
-  PortalChartTooltip,
-  portalChartAxis,
+  PortalQuickNav,
+  PortalEmptyState,
   StatusBadge,
 } from "@/components/portal/PortalUI";
-import {
-  travelerStats,
-  upcomingTrips,
-  savedPlaces,
-  travelerAlerts,
-  exploreActivity,
-  travelerWeatherHubs,
-} from "@/data/saas-traveler";
+import { REPORT_STATUS_LABELS } from "@/lib/tourist-reports";
+import { savedPlaces, travelerAlerts } from "@/data/saas-traveler";
 import { hotels } from "@/data/hotels";
 import { attractions } from "@/data/attractions";
 import { emergencyServices } from "@/data/emergency";
@@ -54,17 +50,63 @@ import { emergencyServices } from "@/data/emergency";
 const LeafletMap = dynamic(() => import("@/components/LeafletMap"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-64 items-center justify-center rounded-[28px] border border-fog bg-mist text-steel">
+    <div className="flex h-[380px] items-center justify-center rounded-[20px] border border-fog bg-mist text-steel">
       Loading map…
     </div>
   ),
 });
 
-export default function TravelerDashboard() {
+interface TravelerDashboardProps {
+  myReports: {
+    id: string;
+    title: string;
+    category: ReportCategory;
+    status: ReportStatus;
+    severity: string;
+    isEmergency: boolean;
+    createdAt: Date;
+    resolutionNote: string | null;
+    property: { name: string } | null;
+  }[];
+  properties: { id: string; name: string; district: string }[];
+  myBookings: TravelerBookingRow[];
+  bookableProperties: BookableProperty[];
+  defaultCheckIn: string;
+  defaultCheckOut: string;
+  registeredHotels: RegisteredHotelMarker[];
+}
+
+function isOpenReport(status: ReportStatus) {
+  return status !== "RESOLVED" && status !== "DISMISSED";
+}
+
+export default function TravelerDashboard({
+  myReports,
+  properties,
+  myBookings,
+  bookableProperties,
+  defaultCheckIn,
+  defaultCheckOut,
+  registeredHotels,
+}: TravelerDashboardProps) {
+  const router = useRouter();
+  const now = new Date();
+  const upcoming = myBookings.filter(
+    (b) => b.checkOut >= now && b.status !== "checked-out"
+  );
+  const completedCount = myBookings.filter(
+    (b) => b.status === "checked-out" || b.checkOut < now
+  ).length;
+  const openReports = myReports.filter((r) => isOpenReport(r.status)).length;
+  const nextTrip = upcoming[0];
+
   const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
   const [flyToPosition, setFlyToPosition] = useState<[number, number] | null>(
     null
   );
+  const [selectedMapHotel, setSelectedMapHotel] =
+    useState<MapHotelSelection | null>(null);
+  const [bookingRefresh, setBookingRefresh] = useState(0);
 
   const nearbyDestinations = useMemo(() => {
     if (!selectedHotel) return [];
@@ -75,111 +117,124 @@ export default function TravelerDashboard() {
     );
   }, [selectedHotel]);
 
-  const weatherLocations = useMemo(
-    () =>
-      upcomingTrips.map((trip) => ({
-        id: `trip-${trip.id}`,
-        label: trip.destination,
-        lat: trip.lat,
-        lng: trip.lng,
-      })),
-    []
-  );
-
   return (
     <div className="space-y-8">
-      <PortalPageHeader eyebrow="Welcome back" title="Your Nepal journey" />
-      <TravelerLocationReporter />
+      <PortalPageHeader
+        eyebrow="Traveler portal"
+        title="Your Nepal journey"
+        subtitle="Book registered stays, share your location for safety maps, and report issues to tourism authorities."
+        action={<TravelerLocationReporter />}
+      />
+
+      <PortalQuickNav
+        items={[
+          { label: "Book stay", href: "#book", icon: Building2 },
+          { label: "Safety & reports", href: "#safety", icon: Shield },
+          { label: "Explore map", href: "#map", icon: MapPin },
+          { label: "Transparency", href: "/transparency", icon: FileWarning },
+        ]}
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <PortalStatCard
           icon={Compass}
-          value={String(travelerStats.upcomingTrips)}
-          label="Upcoming trips"
-          change="+1 new"
-        />
-        <PortalStatCard
-          icon={Heart}
-          value={String(travelerStats.savedPlaces)}
-          label="Saved places"
+          value={String(upcoming.length)}
+          label="Upcoming stays"
+          change={upcoming.length > 0 ? "Confirmed" : undefined}
         />
         <PortalStatCard
           icon={MapPin}
-          value={String(travelerStats.completedTrips)}
-          label="Trips completed"
+          value={String(completedCount)}
+          label="Past bookings"
         />
         <PortalStatCard
           icon={Shield}
-          value={`${travelerStats.safetyScore}%`}
-          label="Safety score"
+          value={String(openReports)}
+          label="Open safety reports"
+          tone={openReports > 0 ? "alert" : "default"}
+          change={openReports > 0 ? "Active" : undefined}
+        />
+        <PortalStatCard
+          icon={Building2}
+          value={String(bookableProperties.length)}
+          label="Hotels available now"
         />
       </div>
 
-      <TouristWeatherBoard
-        locations={
-          weatherLocations.length > 0
-            ? weatherLocations
-            : travelerWeatherHubs
-        }
-      />
+      <div className="grid gap-6 xl:grid-cols-3">
+        <PortalCard id="book" variant="snow" className="xl:col-span-2">
+          <TravelerBookStay
+            bookableProperties={bookableProperties}
+            myBookings={myBookings}
+            defaultCheckIn={defaultCheckIn}
+            defaultCheckOut={defaultCheckOut}
+          />
+        </PortalCard>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <PortalCard id="trips" variant="snow">
-          <PortalSectionTitle title="Upcoming trips" icon={Calendar} />
-          <ul className="space-y-3">
-            {upcomingTrips.map((trip) => (
-              <PortalInnerCard key={trip.id}>
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="font-medium text-ink">{trip.destination}</p>
-                    <p className="text-sm text-steel">{trip.hotel}</p>
-                    <p className="mt-1 text-xs text-steel">{trip.dates}</p>
-                  </div>
-                  <StatusBadge tone={trip.status === "confirmed" ? "success" : "warning"}>
-                    {trip.status}
-                  </StatusBadge>
+        <div className="space-y-6">
+          <PortalCard variant="mist">
+            <PortalSectionTitle title="Next stay" icon={Calendar} />
+            {nextTrip ? (
+              <PortalInnerCard>
+                <p className="font-semibold text-ink">{nextTrip.propertyName}</p>
+                <p className="text-sm text-steel">{nextTrip.roomName}</p>
+                <p className="mt-2 text-xs text-steel">
+                  {nextTrip.checkIn.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  })}{" "}
+                  –{" "}
+                  {nextTrip.checkOut.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </p>
+                <p className="mt-2 text-sm font-medium text-obsidian">
+                  {formatNpr(nextTrip.totalNpr)}
+                </p>
+                <div className="mt-3">
+                  <StatusBadge tone="success">{nextTrip.status}</StatusBadge>
                 </div>
               </PortalInnerCard>
-            ))}
-          </ul>
-        </PortalCard>
-
-        <PortalCard variant="mist">
-          <PortalSectionTitle title="Exploration activity" />
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={exploreActivity}>
-              <defs>
-                <linearGradient id="travelerGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#09090b" stopOpacity={0.12} />
-                  <stop offset="100%" stopColor="#09090b" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#ececee" vertical={false} />
-              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={portalChartAxis.tick} />
-              <YAxis axisLine={false} tickLine={false} tick={portalChartAxis.tick} />
-              <Tooltip content={<PortalChartTooltip unit="visits" />} />
-              <Area
-                type="monotone"
-                dataKey="visits"
-                stroke="#09090b"
-                fill="url(#travelerGrad)"
-                strokeWidth={2.5}
-                dot={false}
-                activeDot={{ r: 4, fill: "#09090b", stroke: "#fff", strokeWidth: 2 }}
+            ) : (
+              <PortalEmptyState
+                title="No upcoming stay"
+                description="Book a room at a StayNEP partner hotel."
               />
-            </AreaChart>
-          </ResponsiveContainer>
-        </PortalCard>
+            )}
+            <a
+              href="#book"
+              className="mt-4 inline-block text-sm font-medium text-obsidian hover:underline"
+            >
+              Browse availability →
+            </a>
+          </PortalCard>
+
+          <PortalCard id="alerts" variant="snow">
+            <PortalSectionTitle title="Travel advisories" icon={Bell} />
+            <ul className="space-y-2">
+              {travelerAlerts.slice(0, 3).map((alert) => (
+                <li
+                  key={alert.id}
+                  className="rounded-[12px] border border-fog bg-mist/50 px-3 py-2.5"
+                >
+                  <p className="text-sm text-ink">{alert.message}</p>
+                  <p className="mt-0.5 text-[11px] text-steel">{alert.time}</p>
+                </li>
+              ))}
+            </ul>
+          </PortalCard>
+        </div>
       </div>
 
       <PortalCard id="map" variant="snow">
         <PortalSectionTitle
-          title="Explore nearby"
-          subtitle={`Select a hotel to see destinations within ${TRAVELER_NEARBY_RADIUS_KM} km`}
+          title="Explore & book on the map"
+          subtitle="Click any hotel marker — Gemini AI books your stay and updates the hotel dashboard"
           icon={MapPin}
         />
-        {selectedHotel && (
-          <div className="mb-4 space-y-3">
+        {selectedHotel && !selectedMapHotel && (
+          <div className="mb-4 grid gap-3 lg:grid-cols-2">
             <TouristWeatherWidget
               lat={selectedHotel.lat}
               lng={selectedHotel.lng}
@@ -198,54 +253,114 @@ export default function TravelerDashboard() {
             />
           </div>
         )}
-        <div className="overflow-hidden rounded-[28px] border border-fog">
-          <LeafletMap
-            hotels={hotels}
-            attractions={attractions}
-            emergencyServices={emergencyServices}
-            filter="all"
-            selectedHotelId={selectedHotel?.id ?? null}
-            onHotelSelect={setSelectedHotel}
-            flyToPosition={flyToPosition}
-            nearbyRadiusKm={TRAVELER_NEARBY_RADIUS_KM}
-            enableHotelExplore
-          />
+        <div className="grid gap-4 lg:grid-cols-5">
+          <div
+            className={`overflow-hidden rounded-[20px] border border-fog lg:col-span-3 ${
+              selectedMapHotel ? "" : "lg:col-span-5"
+            }`}
+          >
+            <LeafletMap
+              hotels={hotels}
+              attractions={attractions}
+              emergencyServices={emergencyServices}
+              filter="all"
+              selectedHotelId={selectedHotel?.id ?? null}
+              onHotelSelect={(h) => {
+                if (!h) {
+                  setSelectedHotel(null);
+                  return;
+                }
+                setSelectedHotel(h);
+                setSelectedMapHotel(fromCatalogHotel(h, null));
+                setFlyToPosition([h.lat, h.lng]);
+              }}
+              flyToPosition={
+                selectedMapHotel
+                  ? [selectedMapHotel.lat, selectedMapHotel.lng]
+                  : flyToPosition
+              }
+              nearbyRadiusKm={TRAVELER_NEARBY_RADIUS_KM}
+              enableHotelExplore={!selectedMapHotel}
+              registeredHotels={registeredHotels}
+              selectedMapHotelKey={selectedMapHotel?.key ?? null}
+              onMapHotelSelect={(h) => {
+                setSelectedMapHotel(h);
+                if (h) {
+                  setSelectedHotel(null);
+                  setFlyToPosition([h.lat, h.lng]);
+                }
+              }}
+            />
+          </div>
+          {selectedMapHotel && (
+            <div className="lg:col-span-2">
+              <HotelMapAiBooking
+                key={`${selectedMapHotel.key}-${bookingRefresh}`}
+                hotel={selectedMapHotel}
+                onClose={() => setSelectedMapHotel(null)}
+                onBooked={() => {
+                  setBookingRefresh((n) => n + 1);
+                  router.refresh();
+                }}
+              />
+            </div>
+          )}
         </div>
       </PortalCard>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <PortalCard id="saved" variant="mist">
-          <PortalSectionTitle title="Saved places" icon={Heart} />
-          <ul className="space-y-2">
-            {savedPlaces.map((place) => (
-              <li
-                key={place.id}
-                className="flex items-center justify-between rounded-[12px] border border-fog bg-snow px-3 py-3"
-              >
-                <div>
-                  <p className="text-sm font-medium text-ink">{place.name}</p>
-                  <p className="text-xs text-steel">{place.district}</p>
-                </div>
-                <span className="rounded-full border border-fog bg-fog px-2 py-0.5 text-xs text-graphite">
-                  {place.type}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </PortalCard>
+      <PortalCard id="safety" variant="mist">
+        <TravelerReportSection myReports={myReports} properties={properties} />
+        {myReports.length > 0 && (
+          <div className="mt-6 border-t border-fog pt-4">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-steel">
+              Recent report status
+            </p>
+            <ul className="flex flex-wrap gap-2">
+              {myReports.slice(0, 5).map((r) => (
+                <li
+                  key={r.id}
+                  className="rounded-full border border-fog bg-snow px-3 py-1 text-xs text-graphite"
+                >
+                  {r.title.slice(0, 32)}
+                  {r.title.length > 32 ? "…" : ""} ·{" "}
+                  {REPORT_STATUS_LABELS[r.status]}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </PortalCard>
 
-        <PortalCard id="alerts" variant="snow">
-          <PortalSectionTitle title="Travel alerts" icon={Bell} />
-          <ul className="space-y-3">
-            {travelerAlerts.map((alert) => (
-              <PortalInnerCard key={alert.id}>
-                <p className="text-sm text-ink">{alert.message}</p>
-                <p className="mt-1 text-xs text-steel">{alert.time}</p>
-              </PortalInnerCard>
-            ))}
-          </ul>
-        </PortalCard>
-      </div>
+      <PortalCard id="saved" variant="snow">
+        <PortalSectionTitle
+          title="Curated destinations"
+          subtitle="Popular places to pair with your stay"
+          icon={Heart}
+        />
+        <ul className="grid gap-2 sm:grid-cols-2">
+          {savedPlaces.map((place) => (
+            <li
+              key={place.id}
+              className="flex items-center justify-between rounded-[12px] border border-fog bg-mist/30 px-3 py-3"
+            >
+              <div>
+                <p className="text-sm font-medium text-ink">{place.name}</p>
+                <p className="text-xs text-steel">{place.district}</p>
+              </div>
+              <span className="rounded-full bg-snow px-2 py-0.5 text-[11px] text-graphite capitalize">
+                {place.type}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-4 text-xs text-steel">
+          See live registered hotels on the{" "}
+          <Link href="/transparency" className="font-medium text-obsidian hover:underline">
+            transparency portal
+          </Link>
+          .
+        </p>
+      </PortalCard>
     </div>
   );
 }

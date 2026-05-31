@@ -4,16 +4,89 @@ import type { ReactNode } from "react";
 export function PortalPageHeader({
   eyebrow,
   title,
+  subtitle,
+  action,
 }: {
   eyebrow: string;
   title: string;
+  subtitle?: string;
+  action?: ReactNode;
 }) {
   return (
-    <div>
-      <p className="text-sm font-medium text-steel">{eyebrow}</p>
-      <h2 className="mt-1 text-[28px] font-bold leading-tight tracking-tight text-obsidian font-cosmica">
-        {title}
-      </h2>
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <p className="text-sm font-medium text-steel">{eyebrow}</p>
+        <h2 className="mt-1 text-[28px] font-bold leading-tight tracking-tight text-obsidian font-cosmica">
+          {title}
+        </h2>
+        {subtitle && (
+          <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-steel font-cosmica">
+            {subtitle}
+          </p>
+        )}
+      </div>
+      {action}
+    </div>
+  );
+}
+
+export function PortalQuickNav({
+  items,
+}: {
+  items: { label: string; href: string; icon?: LucideIcon }[];
+}) {
+  return (
+    <nav className="flex flex-wrap gap-2" aria-label="Dashboard sections">
+      {items.map((item) => {
+        const Icon = item.icon;
+        return (
+          <a
+            key={item.href}
+            href={item.href}
+            className="inline-flex items-center gap-2 rounded-full border border-fog bg-snow px-4 py-2 text-sm font-medium text-graphite transition hover:border-obsidian/20 hover:bg-mist hover:text-obsidian"
+          >
+            {Icon && <Icon className="h-4 w-4 shrink-0 text-steel" />}
+            {item.label}
+          </a>
+        );
+      })}
+    </nav>
+  );
+}
+
+export function PortalReferenceSection({
+  title = "National reference data",
+  subtitle = "Illustrative benchmarks — live operations use map and report data above.",
+  children,
+}: {
+  title?: string;
+  subtitle?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="rounded-[16px] border border-dashed border-fog bg-mist/40 px-4 py-3">
+        <p className="text-xs font-semibold uppercase tracking-wider text-steel">
+          {title}
+        </p>
+        <p className="mt-1 text-sm text-steel">{subtitle}</p>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+export function PortalEmptyState({
+  title,
+  description,
+}: {
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div className="rounded-[16px] border border-dashed border-fog bg-snow/60 px-4 py-8 text-center">
+      <p className="text-sm font-medium text-graphite">{title}</p>
+      {description && <p className="mt-1 text-xs text-steel">{description}</p>}
     </div>
   );
 }

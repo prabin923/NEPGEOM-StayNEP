@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -45,6 +45,30 @@ enum InvoiceStatus {
   PAID
 }
 
+enum ReportCategory {
+  SAFETY
+  SCAM
+  HOTEL
+  TRANSPORT
+  HEALTH
+  OTHER
+}
+
+enum ReportSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ReportStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  DISMISSED
+}
+
 model User {
   id               String            @id @default(cuid())
   name             String
@@ -56,6 +80,7 @@ model User {
   updatedAt        DateTime          @updatedAt
   property         Property?
   travelerLocation TravelerLocation?
+  touristReports   TouristReport[]
 }
 
 model TravelerLocation {
@@ -89,6 +114,7 @@ model Property {
   staffMembers       StaffMember[]
   invoices           Invoice[]
   notifications      Notification[]
+  touristReports     TouristReport[]
 }
 
 model Room {
@@ -209,4 +235,27 @@ model Notification {
   read       Boolean  @default(false)
   sourceKey  String?  @unique
   createdAt  DateTime @default(now())
+}
+
+model TouristReport {
+  id              String         @id @default(cuid())
+  reporterId      String
+  reporter        User           @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  propertyId      String?
+  property        Property?      @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  category        ReportCategory
+  severity        ReportSeverity @default(MEDIUM)
+  status          ReportStatus   @default(OPEN)
+  isEmergency     Boolean        @default(false)
+  title           String
+  description     String
+  latitude        Float?
+  longitude       Float?
+  locationLabel   String?
+  district        String?
+  assignedAgency  String?
+  resolutionNote  String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  resolvedAt      DateTime?
 }

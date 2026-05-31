@@ -40,7 +40,7 @@ const columns: FooterColumn[] = [
       { label: 'Features', href: '#features' },
       { label: 'Map', href: '#map' },
       { label: 'Dashboard', href: '#dashboard' },
-      { label: 'Analytics', href: '#analytics' },
+      { label: 'Transparency', href: '/transparency' },
     ],
   },
   {

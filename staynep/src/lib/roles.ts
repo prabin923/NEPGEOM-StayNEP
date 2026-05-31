@@ -44,10 +44,10 @@ export const PORTALS: Record<PortalRole, PortalConfig> = {
     accentMuted: "rgba(9,9,11,0.06)",
     nav: [
       { label: "Overview", href: "/dashboard/traveler", icon: LayoutDashboard },
-      { label: "Explore Map", href: "/dashboard/traveler#map", icon: MapPin },
-      { label: "My Trips", href: "/dashboard/traveler#trips", icon: Compass },
+      { label: "Book stay", href: "/dashboard/traveler#book", icon: Compass },
+      { label: "Safety", href: "/dashboard/traveler#safety", icon: Shield },
+      { label: "Map & AI book", href: "/dashboard/traveler#map", icon: MapPin },
       { label: "Saved Places", href: "/dashboard/traveler#saved", icon: Heart },
-      { label: "Alerts", href: "/dashboard/traveler#alerts", icon: Bell },
     ],
   },
   hotel: {
@@ -73,11 +73,11 @@ export const PORTALS: Record<PortalRole, PortalConfig> = {
     accent: "#52525b",
     accentMuted: "rgba(82,82,91,0.08)",
     nav: [
-      { label: "Overview", href: "/dashboard/authorities", icon: LayoutDashboard },
-      { label: "Regional Intel", href: "/dashboard/authorities#regions", icon: Globe },
-      { label: "Safety Network", href: "/dashboard/authorities#safety", icon: Shield },
-      { label: "Reports", href: "/dashboard/authorities#reports", icon: FileText },
-      { label: "Incidents", href: "/dashboard/authorities#incidents", icon: AlertTriangle },
+      { label: "Command center", href: "/dashboard/authorities", icon: LayoutDashboard },
+      { label: "Operations map", href: "/dashboard/authorities#operations", icon: Globe },
+      { label: "Triage desk", href: "/dashboard/authorities#incidents", icon: AlertTriangle },
+      { label: "Reference data", href: "/dashboard/authorities#reference", icon: FileText },
+      { label: "Transparency", href: "/transparency", icon: Shield },
     ],
   },
 };

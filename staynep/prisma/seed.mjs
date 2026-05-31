@@ -168,6 +168,107 @@ async function main() {
 
   console.log(`  Travelers: ${demoTravelers.length} demo tourists with map locations`);
   console.log("    (same password as hotel demo)\n");
+
+  await prisma.user.upsert({
+    where: { email: "authorities@staynep.demo" },
+    update: {
+      name: "Nepal Tourism Board",
+      role: "AUTHORITIES",
+      organization: "Ministry of Culture, Tourism & Civil Aviation",
+      passwordHash,
+    },
+    create: {
+      name: "Nepal Tourism Board",
+      email: "authorities@staynep.demo",
+      passwordHash,
+      role: "AUTHORITIES",
+      organization: "Ministry of Culture, Tourism & Civil Aviation",
+    },
+  });
+
+  console.log("  Authorities portal login:");
+  console.log("    Email:    authorities@staynep.demo");
+  console.log("    Password: StayNep123!");
+  console.log("    URL:      /dashboard/authorities\n");
+
+  const james = await prisma.user.findUnique({
+    where: { email: "traveler2@staynep.demo" },
+  });
+  const priya = await prisma.user.findUnique({
+    where: { email: "traveler3@staynep.demo" },
+  });
+  if (james) {
+    await prisma.touristReport.upsert({
+      where: { id: "demo-report-scam-thamel" },
+      update: {},
+      create: {
+        id: "demo-report-scam-thamel",
+        reporterId: james.id,
+        category: "SCAM",
+        severity: "HIGH",
+        status: "ASSIGNED",
+        isEmergency: false,
+        title: "Overpriced taxi from airport",
+        description:
+          "Driver quoted 5000 NPR for Thamel trip; meter was disabled. Request guidance on official taxi rates and reporting.",
+        latitude: 27.7172,
+        longitude: 85.324,
+        locationLabel: "Thamel, Kathmandu",
+        district: "Kathmandu",
+        assignedAgency: "Tourism Police — Kathmandu",
+        propertyId: null,
+      },
+    });
+  }
+
+  if (priya) {
+    await prisma.touristReport.upsert({
+      where: { id: "demo-report-hotel-chitwan" },
+      update: {},
+      create: {
+        id: "demo-report-hotel-chitwan",
+        reporterId: priya.id,
+        propertyId: property.id,
+        category: "HOTEL",
+        severity: "MEDIUM",
+        status: "OPEN",
+        isEmergency: false,
+        title: "Room not matching booking description",
+        description:
+          "Booked deluxe room with AC; assigned room had no AC and different view. Hotel staff asked to wait until next day.",
+        latitude: 27.5291,
+        longitude: 84.3542,
+        locationLabel: "Sauraha, Chitwan",
+        district: "Chitwan",
+      },
+    });
+
+    await prisma.touristReport.upsert({
+      where: { id: "demo-report-safety-resolved" },
+      update: {},
+      create: {
+        id: "demo-report-safety-resolved",
+        reporterId: priya.id,
+        category: "SAFETY",
+        severity: "CRITICAL",
+        status: "RESOLVED",
+        isEmergency: true,
+        title: "SOS — lost on jungle trail (resolved)",
+        description:
+          "Demo resolved emergency: traveler reported disorientation near buffer zone; rangers escorted back to lodge.",
+        latitude: 27.55,
+        longitude: 84.38,
+        locationLabel: "Chitwan buffer zone",
+        district: "Chitwan",
+        assignedAgency: "Chitwan National Park — Ranger Unit",
+        resolutionNote: "Escorted to lodge; no injuries. Advised guided tours only.",
+        resolvedAt: new Date(),
+      },
+    });
+  }
+
+  const reportCount = await prisma.touristReport.count();
+  console.log(`  Tourist reports: ${reportCount} demo issue(s) for authorities triage\n`);
 }
 
 main()

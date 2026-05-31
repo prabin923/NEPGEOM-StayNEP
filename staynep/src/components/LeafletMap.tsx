@@ -18,6 +18,13 @@ import type { Attraction } from '@/data/attractions';
 import type { EmergencyService } from '@/data/emergency';
 import type { TouristMapMarker } from '@/lib/traveler-locations';
 import type { RegisteredHotelMarker } from '@/lib/registered-hotels';
+import type { ReportMapMarker } from '@/lib/report-map-markers';
+import {
+  fromCatalogHotel,
+  fromRegisteredHotel,
+  type MapHotelSelection,
+} from '@/lib/map-hotel-selection';
+import { REPORT_CATEGORY_LABELS } from '@/lib/tourist-reports';
 import {
   getWithinRadiusKm,
   formatDistanceKm,
@@ -78,6 +85,13 @@ const icons = {
     26,
     'box-shadow:0 0 0 3px rgba(245,158,11,0.35), 0 4px 12px rgba(9,9,11,0.15);'
   ),
+  incident: createColorIcon('#dc2626', 'rgba(220,38,38,0.45)', 24),
+  incidentEmergency: createColorIcon(
+    '#b91c1c',
+    'rgba(220,38,38,0.6)',
+    30,
+    'box-shadow:0 0 0 4px rgba(239,68,68,0.35), 0 6px 14px rgba(9,9,11,0.2);animation:pulse 1.5s ease-in-out infinite;'
+  ),
 } as const;
 
 export type FilterType =
@@ -87,7 +101,8 @@ export type FilterType =
   | 'hospitals'
   | 'police'
   | 'shelters'
-  | 'tourists';
+  | 'tourists'
+  | 'incidents';
 
 interface LeafletMapProps {
   hotels: Hotel[];
@@ -102,6 +117,9 @@ interface LeafletMapProps {
   flyToPosition?: [number, number] | null;
   tourists?: TouristMapMarker[];
   registeredHotels?: RegisteredHotelMarker[];
+  reportMarkers?: ReportMapMarker[];
+  selectedMapHotelKey?: string | null;
+  onMapHotelSelect?: (hotel: MapHotelSelection | null) => void;
 }
 
 function Stars({ rating }: { rating: number }) {
@@ -188,12 +206,14 @@ function HotelPopupContent({
   nearby,
   radiusKm,
   onExplore,
+  onBookWithAi,
   canExplore,
 }: {
   hotel: Hotel;
   nearby: { name: string; category: string; distanceKm: number }[];
   radiusKm: number;
   onExplore: () => void;
+  onBookWithAi?: () => void;
   canExplore: boolean;
 }) {
   return (
@@ -218,11 +238,20 @@ function HotelPopupContent({
           <span className="text-steel"> / {hotel.totalRooms}</span>
         </p>
         <p className="font-medium text-obsidian">{hotel.priceRange}</p>
+        {onBookWithAi && (
+          <button
+            type="button"
+            onClick={onBookWithAi}
+            className="mt-1 w-full rounded-[36px] bg-violet-700 px-3 py-2 text-xs font-semibold text-snow transition hover:bg-violet-800"
+          >
+            Book with Gemini AI
+          </button>
+        )}
         {canExplore && (
           <button
             type="button"
             onClick={onExplore}
-            className="mt-1 w-full rounded-[36px] bg-obsidian px-3 py-2 text-xs font-medium text-snow transition hover:opacity-90"
+            className="mt-1 w-full rounded-[36px] border border-fog bg-snow px-3 py-2 text-xs font-medium text-obsidian transition hover:bg-mist"
           >
             Show destinations within {radiusKm} km
           </button>
@@ -264,6 +293,9 @@ export default function LeafletMap({
   flyToPosition = null,
   tourists = [],
   registeredHotels = [],
+  reportMarkers = [],
+  selectedMapHotelKey = null,
+  onMapHotelSelect,
 }: LeafletMapProps) {
   const selectedHotel = useMemo(
     () => hotelData.find((h) => h.id === selectedHotelId) ?? null,
@@ -286,18 +318,31 @@ export default function LeafletMap({
 
   const exploreMode = enableHotelExplore && selectedHotel !== null;
 
+  const incidentsOnly = filter === 'incidents';
   const touristsOnly = filter === 'tourists';
-  const showHotels = !touristsOnly && (filter === 'all' || filter === 'hotels');
+  const showHotels =
+    !incidentsOnly &&
+    !touristsOnly &&
+    (filter === 'all' || filter === 'hotels');
   const showAttractions =
+    !incidentsOnly &&
     !touristsOnly &&
     (filter === 'all' || filter === 'attractions' || exploreMode);
   const showEmergency =
+    !incidentsOnly &&
     !touristsOnly &&
     (filter === 'all' ||
       filter === 'hospitals' ||
       filter === 'police' ||
       filter === 'shelters');
-  const showTourists = filter === 'all' || filter === 'tourists';
+  const showTourists =
+    !incidentsOnly && (filter === 'all' || filter === 'tourists');
+  const showRegisteredHotels =
+    !incidentsOnly &&
+    !touristsOnly &&
+    (filter === 'all' || filter === 'hotels');
+  const showReports =
+    filter === 'all' || filter === 'incidents';
 
   const filteredEmergency = emergencyData.filter((e) => {
     if (filter === 'all') return true;
@@ -308,10 +353,12 @@ export default function LeafletMap({
   });
 
   const handleHotelClick = (hotel: Hotel) => {
+    if (onMapHotelSelect) {
+      onMapHotelSelect(fromCatalogHotel(hotel, null));
+      return;
+    }
     if (!enableHotelExplore || !onHotelSelect) return;
-    onHotelSelect(
-      selectedHotelId === hotel.id ? null : hotel
-    );
+    onHotelSelect(selectedHotelId === hotel.id ? null : hotel);
   };
 
   return (
@@ -358,8 +405,11 @@ export default function LeafletMap({
 
         {showHotels &&
           hotelData.map((hotel) => {
-            const isSelected = selectedHotelId === hotel.id;
-            const isDimmed = exploreMode && !isSelected;
+            const mapKey = `static-${hotel.id}`;
+            const isMapSelected = selectedMapHotelKey === mapKey;
+            const isExploreSelected = selectedHotelId === hotel.id;
+            const isSelected = isMapSelected || isExploreSelected;
+            const isDimmed = exploreMode && !isExploreSelected && !isMapSelected;
 
             if (exploreMode && !isSelected && filter === 'hotels') {
               return null;
@@ -394,55 +444,81 @@ export default function LeafletMap({
                     radiusKm={nearbyRadiusKm}
                     canExplore={enableHotelExplore && !!onHotelSelect}
                     onExplore={() => onHotelSelect?.(hotel)}
+                    onBookWithAi={
+                      onMapHotelSelect
+                        ? () => onMapHotelSelect(fromCatalogHotel(hotel, null))
+                        : undefined
+                    }
                   />
                 </Popup>
               </Marker>
             );
           })}
 
-        {showHotels &&
-          registeredHotels.map((hotel) => (
-            <Marker
-              key={`registered-${hotel.id}`}
-              position={[hotel.lat, hotel.lng]}
-              icon={icons.registeredHotel}
-              zIndexOffset={600}
-            >
-              <Popup>
-                <div className="min-w-[220px] font-cosmica">
-                  <div className="mb-2 flex items-start gap-2">
-                    <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-blue-600 ring-2 ring-amber-400" />
-                    <div>
-                      <h3 className="text-sm font-semibold leading-tight text-obsidian">
-                        {hotel.name}
-                      </h3>
-                      <p className="mt-0.5 text-xs font-medium text-amber-700">
-                        StayNEP registered hotel
+        {showRegisteredHotels &&
+          registeredHotels.map((hotel) => {
+            const isRegSelected = selectedMapHotelKey === hotel.id;
+            return (
+              <Marker
+                key={`registered-${hotel.id}`}
+                position={[hotel.lat, hotel.lng]}
+                icon={
+                  isRegSelected
+                    ? icons.hotelSelected
+                    : icons.registeredHotel
+                }
+                zIndexOffset={isRegSelected ? 900 : 600}
+                eventHandlers={{
+                  click: () => onMapHotelSelect?.(fromRegisteredHotel(hotel)),
+                }}
+              >
+                <Popup>
+                  <div className="min-w-[220px] font-cosmica">
+                    <div className="mb-2 flex items-start gap-2">
+                      <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-blue-600 ring-2 ring-amber-400" />
+                      <div>
+                        <h3 className="text-sm font-semibold leading-tight text-obsidian">
+                          {hotel.name}
+                        </h3>
+                        <p className="mt-0.5 text-xs font-medium text-amber-700">
+                          StayNEP partner · book with AI
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5 border-t border-fog pt-2 text-xs text-steel">
+                      <p>{hotel.district}</p>
+                      {hotel.address && <p>{hotel.address}</p>}
+                      {hotel.phone && (
+                        <p>
+                          <a
+                            href={`tel:${hotel.phone}`}
+                            className="font-medium text-obsidian hover:underline"
+                          >
+                            {hotel.phone}
+                          </a>
+                        </p>
+                      )}
+                      <p className="font-medium text-obsidian">
+                        {hotel.availableUnits} / {hotel.totalUnits} units available ·{' '}
+                        {hotel.roomTypes} room type{hotel.roomTypes === 1 ? '' : 's'}
                       </p>
+                      {onMapHotelSelect && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onMapHotelSelect(fromRegisteredHotel(hotel))
+                          }
+                          className="mt-2 w-full rounded-[36px] bg-violet-700 px-3 py-2 text-xs font-semibold text-snow transition hover:opacity-90"
+                        >
+                          Book with Gemini AI
+                        </button>
+                      )}
                     </div>
                   </div>
-                  <div className="space-y-1.5 border-t border-fog pt-2 text-xs text-steel">
-                    <p>{hotel.district}</p>
-                    {hotel.address && <p>{hotel.address}</p>}
-                    {hotel.phone && (
-                      <p>
-                        <a
-                          href={`tel:${hotel.phone}`}
-                          className="font-medium text-obsidian hover:underline"
-                        >
-                          {hotel.phone}
-                        </a>
-                      </p>
-                    )}
-                    <p className="font-medium text-obsidian">
-                      {hotel.availableUnits} / {hotel.totalUnits} units available ·{' '}
-                      {hotel.roomTypes} room type{hotel.roomTypes === 1 ? '' : 's'}
-                    </p>
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
+                </Popup>
+              </Marker>
+            );
+          })}
 
         {showAttractions &&
           attractionData.map((attr) => {
@@ -494,6 +570,50 @@ export default function LeafletMap({
               </Marker>
             );
           })}
+
+        {showReports &&
+          reportMarkers.map((report) => (
+            <Marker
+              key={`report-${report.id}`}
+              position={[report.lat, report.lng]}
+              icon={
+                report.isEmergency ? icons.incidentEmergency : icons.incident
+              }
+              zIndexOffset={900}
+            >
+              <Popup>
+                <div className="min-w-[220px] font-cosmica">
+                  <div className="mb-2 flex items-start gap-2">
+                    <span
+                      className={`mt-1 h-2 w-2 shrink-0 rounded-full ${
+                        report.isEmergency ? "bg-red-600" : "bg-orange-500"
+                      }`}
+                    />
+                    <div>
+                      <h3 className="text-sm font-semibold leading-tight text-obsidian">
+                        {report.title}
+                      </h3>
+                      <p className="mt-0.5 text-xs text-steel">
+                        {REPORT_CATEGORY_LABELS[report.category]}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="space-y-1 border-t border-fog pt-2 text-xs text-steel">
+                    {report.isEmergency && (
+                      <p className="font-semibold text-red-700">Emergency report</p>
+                    )}
+                    <p className="capitalize">
+                      Status: <span className="text-graphite">{report.status.toLowerCase()}</span>
+                    </p>
+                    <p className="capitalize">
+                      Severity: <span className="text-graphite">{report.severity.toLowerCase()}</span>
+                    </p>
+                    {report.district && <p>{report.district}</p>}
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
 
         {showTourists &&
           tourists.map((t) => (

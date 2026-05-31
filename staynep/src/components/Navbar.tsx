@@ -9,8 +9,8 @@ const navLinks = [
   { label: 'Features', href: 'features' },
   { label: 'Map', href: 'map' },
   { label: 'Dashboard', href: 'dashboard' },
+  { label: 'Transparency', href: '/transparency' },
   { label: 'Impact', href: 'impact' },
-  { label: 'Roadmap', href: 'roadmap' },
 ];
 
 export default function Navbar() {
@@ -58,16 +58,27 @@ export default function Navbar() {
 
           {/* Desktop nav links */}
           <div className="hidden items-center gap-1 md:flex">
-            {navLinks.map((link) => (
-              <button
-                key={link.href}
-                onClick={() => scrollTo(link.href)}
-                className="group relative rounded-lg px-4 py-2 text-sm font-medium text-ink/75 hover:text-obsidian focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-obsidian/50 cursor-pointer"
-              >
-                {link.label}
-                <span className="absolute inset-x-4 bottom-1 h-px scale-x-0 bg-obsidian transition-transform duration-200 group-hover:scale-x-100" />
-              </button>
-            ))}
+            {navLinks.map((link) =>
+              link.href.startsWith("/") ? (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="group relative rounded-lg px-4 py-2 text-sm font-medium text-ink/75 hover:text-obsidian"
+                >
+                  {link.label}
+                  <span className="absolute inset-x-4 bottom-1 h-px scale-x-0 bg-obsidian transition-transform duration-200 group-hover:scale-x-100" />
+                </Link>
+              ) : (
+                <button
+                  key={link.href}
+                  onClick={() => scrollTo(link.href)}
+                  className="group relative rounded-lg px-4 py-2 text-sm font-medium text-ink/75 hover:text-obsidian focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-obsidian/50 cursor-pointer"
+                >
+                  {link.label}
+                  <span className="absolute inset-x-4 bottom-1 h-px scale-x-0 bg-obsidian transition-transform duration-200 group-hover:scale-x-100" />
+                </button>
+              )
+            )}
           </div>
 
           {/* Desktop CTA */}
@@ -118,15 +129,26 @@ export default function Navbar() {
           }`}
         >
           <div className="flex flex-col gap-1 p-4">
-            {navLinks.map((link) => (
-              <button
-                key={link.href}
-                onClick={() => scrollTo(link.href)}
-                className="rounded-xl px-4 py-3 text-left text-base font-medium text-ink/80 hover:text-obsidian hover:bg-fog/50 cursor-pointer"
-              >
-                {link.label}
-              </button>
-            ))}
+            {navLinks.map((link) =>
+              link.href.startsWith("/") ? (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-xl px-4 py-3 text-left text-base font-medium text-ink/80 hover:text-obsidian hover:bg-fog/50"
+                >
+                  {link.label}
+                </Link>
+              ) : (
+                <button
+                  key={link.href}
+                  onClick={() => scrollTo(link.href)}
+                  className="rounded-xl px-4 py-3 text-left text-base font-medium text-ink/80 hover:text-obsidian hover:bg-fog/50 cursor-pointer"
+                >
+                  {link.label}
+                </button>
+              )
+            )}
             <div className="my-2 h-px bg-fog" />
             <Link
               href="/signup"
