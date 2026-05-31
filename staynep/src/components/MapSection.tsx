@@ -69,7 +69,7 @@ export default function MapSection() {
     >
       <div className="relative mx-auto max-w-[1200px]">
         {/* ── Heading ───────────────────────────────────────────────────── */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-12" data-gsap-reveal>
           <div className="inline-flex items-center gap-2 mb-4 rounded-full border border-fog bg-snow px-4 py-1.5">
             <MapPin className="h-4 w-4 text-steel" />
             <span className="text-[12px] font-medium tracking-tight text-steel uppercase">
@@ -116,7 +116,10 @@ export default function MapSection() {
         </div>
 
         {/* ── Map ───────────────────────────────────────────────────────── */}
-        <div className="rounded-[36px] overflow-hidden border border-fog">
+        <div
+          data-gsap="map-panel"
+          className="rounded-[36px] overflow-hidden border border-fog"
+        >
           <LeafletMap
             hotels={hotels}
             attractions={attractions}

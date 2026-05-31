@@ -40,8 +40,8 @@ export const PORTALS: Record<PortalRole, PortalConfig> = {
     title: "Traveler Portal",
     subtitle: "Discover Nepal, book stays, stay safe",
     basePath: "/dashboard/traveler",
-    accent: "#C9A24A",
-    accentMuted: "rgba(201,162,74,0.15)",
+    accent: "#09090b",
+    accentMuted: "rgba(9,9,11,0.06)",
     nav: [
       { label: "Overview", href: "/dashboard/traveler", icon: LayoutDashboard },
       { label: "Explore Map", href: "/dashboard/traveler#map", icon: MapPin },
@@ -55,8 +55,8 @@ export const PORTALS: Record<PortalRole, PortalConfig> = {
     title: "Hotel Partner",
     subtitle: "Manage inventory, bookings & occupancy",
     basePath: "/dashboard/hotel",
-    accent: "#3B82F6",
-    accentMuted: "rgba(59,130,246,0.15)",
+    accent: "#3f3f46",
+    accentMuted: "rgba(63,63,70,0.08)",
     nav: [
       { label: "Overview", href: "/dashboard/hotel", icon: LayoutDashboard },
       { label: "Rooms", href: "/dashboard/hotel#rooms", icon: BedDouble },
@@ -70,8 +70,8 @@ export const PORTALS: Record<PortalRole, PortalConfig> = {
     title: "Tourism Authority",
     subtitle: "National tourism intelligence & policy",
     basePath: "/dashboard/authorities",
-    accent: "#10B981",
-    accentMuted: "rgba(16,185,129,0.15)",
+    accent: "#52525b",
+    accentMuted: "rgba(82,82,91,0.08)",
     nav: [
       { label: "Overview", href: "/dashboard/authorities", icon: LayoutDashboard },
       { label: "Regional Intel", href: "/dashboard/authorities#regions", icon: Globe },

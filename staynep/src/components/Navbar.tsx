@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
-import { MapPin, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
+import { LogoImage } from '@/components/Logo';
 
 const navLinks = [
   { label: 'Features', href: 'features' },
@@ -49,15 +50,10 @@ export default function Navbar() {
           {/* Logo */}
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="group flex items-center gap-2 outline-none cursor-pointer"
+            className="group flex items-center outline-none cursor-pointer transition-transform duration-200 active:scale-[0.98]"
             aria-label="Scroll to top"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-fog transition-transform duration-200 active:scale-95">
-              <MapPin className="h-5 w-5 text-graphite" />
-            </span>
-            <span className="text-xl font-bold tracking-tight lg:text-2xl font-cosmica text-obsidian">
-              StayNEP
-            </span>
+            <LogoImage size="md" priority className="lg:!h-11" />
           </button>
 
           {/* Desktop nav links */}
@@ -77,13 +73,13 @@ export default function Navbar() {
           {/* Desktop CTA */}
           <div className="hidden items-center gap-3 md:flex">
             <Link
-              href="/dashboard"
+              href="/login"
               className="rounded-lg px-4 py-2.5 text-sm font-medium text-ink/75 transition hover:text-obsidian"
             >
-              Portals
+              Sign in
             </Link>
             <Link
-              href="/dashboard"
+              href="/signup"
               className="relative rounded-[36px] bg-obsidian px-5 py-2.5 text-sm font-medium text-snow shadow-button transition-transform duration-200 active:scale-95"
             >
               Get Started
@@ -133,11 +129,11 @@ export default function Navbar() {
             ))}
             <div className="my-2 h-px bg-fog" />
             <Link
-              href="/dashboard"
+              href="/signup"
               className="rounded-[36px] bg-obsidian px-4 py-3 text-center text-base font-medium text-snow shadow-button"
               onClick={() => setMobileOpen(false)}
             >
-              Open Portals
+              Get Started
             </Link>
           </div>
         </div>

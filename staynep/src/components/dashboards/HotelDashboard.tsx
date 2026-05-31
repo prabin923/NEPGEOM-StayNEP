@@ -22,7 +22,16 @@ import {
   Cell,
 } from "recharts";
 import PortalStatCard from "@/components/portal/PortalStatCard";
-import { PORTALS } from "@/lib/roles";
+import {
+  PortalPageHeader,
+  PortalCard,
+  PortalSectionTitle,
+  PortalChartTooltip,
+  portalChartAxis,
+  StatusBadge,
+  portalTableHead,
+  portalTableRow,
+} from "@/components/portal/PortalUI";
 import {
   hotelStats,
   recentBookings,
@@ -31,67 +40,67 @@ import {
   revenueBySource,
 } from "@/data/saas-hotel";
 
-const accent = PORTALS.hotel.accent;
-const PIE_COLORS = ["#3B82F6", "#C9A24A", "#6B7280"];
+const PIE_COLORS = ["#09090b", "#71717a", "#d4d4d8"];
 
 export default function HotelDashboard() {
   return (
     <div className="space-y-8">
-      <div>
-        <p className="text-sm text-gray-400">Property dashboard</p>
-        <h2 className="text-2xl font-bold text-white">Fishtail Lodge — Pokhara</h2>
-      </div>
+      <PortalPageHeader
+        eyebrow="Property dashboard"
+        title="Fishtail Lodge — Pokhara"
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <PortalStatCard
           icon={TrendingUp}
           value={`${hotelStats.occupancyRate}%`}
           label="Occupancy rate"
-          accent={accent}
-          change="+6% vs last week"
+          change="+6%"
         />
         <PortalStatCard
           icon={BedDouble}
           value={`${hotelStats.availableRooms}/${hotelStats.totalRooms}`}
           label="Rooms available"
-          accent={accent}
         />
         <PortalStatCard
           icon={Calendar}
           value={String(hotelStats.todayBookings)}
           label="Bookings today"
-          accent={accent}
         />
         <PortalStatCard
           icon={DollarSign}
           value={hotelStats.monthlyRevenue}
           label="Revenue (MTD)"
-          accent={accent}
         />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <section id="analytics" className="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <h3 className="mb-4 font-semibold text-white">Occupancy trend</h3>
+        <PortalCard id="analytics" variant="mist">
+          <PortalSectionTitle title="Occupancy trend" />
           <ResponsiveContainer width="100%" height={240}>
             <LineChart data={occupancyTrend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
-              <XAxis dataKey="week" tick={{ fill: "#9CA3AF", fontSize: 12 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: "#9CA3AF", fontSize: 12 }} axisLine={false} tickLine={false} domain={[0, 100]} />
-              <Tooltip
-                contentStyle={{
-                  background: "#0D1B3E",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: 12,
-                }}
+              <CartesianGrid strokeDasharray="3 3" stroke="#ececee" vertical={false} />
+              <XAxis dataKey="week" axisLine={false} tickLine={false} tick={portalChartAxis.tick} />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={portalChartAxis.tick}
+                domain={[0, 100]}
               />
-              <Line type="monotone" dataKey="occupancy" stroke={accent} strokeWidth={2.5} dot={{ fill: accent }} />
+              <Tooltip content={<PortalChartTooltip unit="%" />} />
+              <Line
+                type="monotone"
+                dataKey="occupancy"
+                stroke="#09090b"
+                strokeWidth={2.5}
+                dot={{ fill: "#09090b", r: 3 }}
+              />
             </LineChart>
           </ResponsiveContainer>
-        </section>
+        </PortalCard>
 
-        <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <h3 className="mb-4 font-semibold text-white">Revenue by channel</h3>
+        <PortalCard variant="snow">
+          <PortalSectionTitle title="Revenue by channel" />
           <ResponsiveContainer width="100%" height={240}>
             <PieChart>
               <Pie
@@ -108,115 +117,106 @@ export default function HotelDashboard() {
                   <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip
-                contentStyle={{
-                  background: "#0D1B3E",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: 12,
-                }}
-              />
+              <Tooltip content={<PortalChartTooltip unit="%" />} />
             </PieChart>
           </ResponsiveContainer>
-          <div className="mt-2 flex flex-wrap justify-center gap-4 text-xs text-gray-400">
+          <div className="mt-3 flex flex-wrap justify-center gap-4 text-xs text-steel">
             {revenueBySource.map((s, i) => (
               <span key={s.source} className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full" style={{ background: PIE_COLORS[i] }} />
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ background: PIE_COLORS[i] }}
+                />
                 {s.source} ({s.value}%)
               </span>
             ))}
           </div>
-        </section>
+        </PortalCard>
       </div>
 
-      <section id="rooms" className="rounded-2xl border border-white/10 bg-white/5 p-5">
-        <h3 className="mb-4 font-semibold text-white">Room inventory</h3>
+      <PortalCard id="rooms" variant="snow">
+        <PortalSectionTitle title="Room inventory" icon={BedDouble} />
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-white/10 text-gray-500">
-                <th className="pb-3 pr-4 font-medium">Room type</th>
-                <th className="pb-3 pr-4 font-medium">Available</th>
-                <th className="pb-3 pr-4 font-medium">Total</th>
-                <th className="pb-3 font-medium">Rate / night</th>
+              <tr className={portalTableHead}>
+                <th className="pb-3 pr-4">Room type</th>
+                <th className="pb-3 pr-4">Available</th>
+                <th className="pb-3 pr-4">Total</th>
+                <th className="pb-3">Rate / night</th>
               </tr>
             </thead>
             <tbody>
               {roomInventory.map((room) => (
-                <tr key={room.type} className="border-b border-white/5">
-                  <td className="py-3 pr-4 font-medium text-white">{room.type}</td>
-                  <td className="py-3 pr-4 text-gray-300">{room.available}</td>
-                  <td className="py-3 pr-4 text-gray-400">{room.total}</td>
-                  <td className="py-3" style={{ color: accent }}>
-                    {room.rate}
-                  </td>
+                <tr key={room.type} className={portalTableRow}>
+                  <td className="py-3 pr-4 font-medium text-ink">{room.type}</td>
+                  <td className="py-3 pr-4 text-graphite">{room.available}</td>
+                  <td className="py-3 pr-4 text-steel">{room.total}</td>
+                  <td className="py-3 font-medium text-obsidian">{room.rate}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </section>
+      </PortalCard>
 
-      <section id="bookings" className="rounded-2xl border border-white/10 bg-white/5 p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="font-semibold text-white">Recent bookings</h3>
-          <Users className="h-4 w-4 text-gray-500" />
-        </div>
+      <PortalCard id="bookings" variant="mist">
+        <PortalSectionTitle title="Recent bookings" icon={Users} />
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-white/10 text-gray-500">
-                <th className="pb-3 pr-4 font-medium">ID</th>
-                <th className="pb-3 pr-4 font-medium">Guest</th>
-                <th className="pb-3 pr-4 font-medium">Room</th>
-                <th className="pb-3 pr-4 font-medium">Check-in</th>
-                <th className="pb-3 pr-4 font-medium">Status</th>
+              <tr className={portalTableHead}>
+                <th className="pb-3 pr-4">ID</th>
+                <th className="pb-3 pr-4">Guest</th>
+                <th className="pb-3 pr-4">Room</th>
+                <th className="pb-3 pr-4">Check-in</th>
+                <th className="pb-3">Status</th>
               </tr>
             </thead>
             <tbody>
               {recentBookings.map((b) => (
-                <tr key={b.id} className="border-b border-white/5">
-                  <td className="py-3 pr-4 font-mono text-xs text-gray-400">{b.id}</td>
-                  <td className="py-3 pr-4 text-white">{b.guest}</td>
-                  <td className="py-3 pr-4 text-gray-300">{b.room}</td>
-                  <td className="py-3 pr-4 text-gray-400">{b.checkIn}</td>
-                  <td className="py-3 pr-4">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                <tr key={b.id} className={portalTableRow}>
+                  <td className="py-3 pr-4 font-mono text-xs text-steel">{b.id}</td>
+                  <td className="py-3 pr-4 text-ink">{b.guest}</td>
+                  <td className="py-3 pr-4 text-graphite">{b.room}</td>
+                  <td className="py-3 pr-4 text-steel">{b.checkIn}</td>
+                  <td className="py-3">
+                    <StatusBadge
+                      tone={
                         b.status === "checked-in"
-                          ? "bg-emerald-500/20 text-emerald-400"
+                          ? "success"
                           : b.status === "confirmed"
-                            ? "bg-blue-500/20 text-blue-400"
-                            : "bg-amber-500/20 text-amber-400"
-                      }`}
+                            ? "info"
+                            : "warning"
+                      }
                     >
                       {b.status}
-                    </span>
+                    </StatusBadge>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </section>
+      </PortalCard>
 
-      <section id="guests" className="rounded-2xl border border-white/10 bg-white/5 p-5">
-        <h3 className="mb-4 font-semibold text-white">Guest volume (weekly)</h3>
+      <PortalCard id="guests" variant="snow">
+        <PortalSectionTitle title="Guest volume (weekly)" />
         <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={occupancyTrend.map((w) => ({ ...w, guests: Math.round(w.occupancy * 1.1) }))}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
-            <XAxis dataKey="week" tick={{ fill: "#9CA3AF", fontSize: 12 }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: "#9CA3AF", fontSize: 12 }} axisLine={false} tickLine={false} />
-            <Tooltip
-              contentStyle={{
-                background: "#0D1B3E",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 12,
-              }}
-            />
-            <Bar dataKey="guests" fill={accent} radius={[6, 6, 0, 0]} />
+          <BarChart
+            data={occupancyTrend.map((w) => ({
+              ...w,
+              guests: Math.round(w.occupancy * 1.1),
+            }))}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#ececee" vertical={false} />
+            <XAxis dataKey="week" axisLine={false} tickLine={false} tick={portalChartAxis.tick} />
+            <YAxis axisLine={false} tickLine={false} tick={portalChartAxis.tick} />
+            <Tooltip content={<PortalChartTooltip />} />
+            <Bar dataKey="guests" fill="#09090b" radius={[6, 6, 0, 0]} maxBarSize={48} />
           </BarChart>
         </ResponsiveContainer>
-      </section>
+      </PortalCard>
     </div>
   );
 }

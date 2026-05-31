@@ -18,7 +18,7 @@ function MapPreview() {
   ];
 
   return (
-    <div className="relative mx-auto mt-12 w-full max-w-3xl lg:mt-16">
+    <div data-gsap="hero-map" className="relative mx-auto mt-12 w-full max-w-3xl lg:mt-16">
       <div className="relative overflow-hidden rounded-[36px] border border-fog bg-snow">
         {/* Toolbar */}
         <div className="flex items-center gap-2 border-b border-fog bg-fog/50 px-4 py-3">
@@ -66,12 +66,12 @@ function MapPreview() {
           {markers.map((m, i) => (
             <div
               key={i}
-              className="absolute flex flex-col items-center animate-fade-in-up"
+              data-gsap="map-marker"
+              className="absolute flex flex-col items-center"
               style={{
                 left: m.x,
                 top: m.y,
                 transform: 'translate(-50%,-50%)',
-                animationDelay: `${i * 0.1}s`,
               }}
             >
               {m.pulse && (
@@ -115,7 +115,11 @@ function StatsBar() {
       <div className="rounded-[36px] border border-fog bg-snow p-6">
         <div className="grid grid-cols-2 gap-6 sm:grid-cols-4 sm:gap-4">
           {stats.map((s, i) => (
-            <div key={i} className="flex flex-col items-center text-center">
+            <div
+              key={i}
+              data-gsap="hero-stat"
+              className="flex flex-col items-center text-center"
+            >
               <span className="text-[40px] font-bold leading-none tracking-tight text-obsidian font-cosmica">
                 {s.value}
               </span>
@@ -147,7 +151,10 @@ export default function Hero() {
       {/* ---- Content ---- */}
       <div className="relative z-20 mx-auto w-full max-w-7xl px-4 text-center sm:px-6 lg:px-8">
         {/* Badge */}
-        <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-fog bg-snow px-4 py-1.5">
+        <div
+          data-gsap="hero-badge"
+          className="mb-8 inline-flex items-center gap-2 rounded-full border border-fog bg-snow px-4 py-1.5"
+        >
           <Compass className="h-4 w-4 text-steel" />
           <span className="text-[12px] font-medium tracking-tight text-steel">
             GIS-Powered Tourism Intelligence
@@ -155,13 +162,19 @@ export default function Hero() {
         </div>
 
         {/* Headline */}
-        <h1 className="mx-auto max-w-4xl text-[38px] leading-[1.1] sm:text-[48px] md:text-[56px] font-bold tracking-tight text-obsidian font-cosmica">
+        <h1
+          data-gsap="hero-title"
+          className="mx-auto max-w-4xl text-[38px] leading-[1.1] sm:text-[48px] md:text-[56px] font-bold tracking-tight text-obsidian font-cosmica"
+        >
           Transforming Nepal's Tourism <br className="hidden sm:block" />
           Through <span className="text-ash">Location Intelligence</span>
         </h1>
 
         {/* Subheadline */}
-        <p className="mx-auto mt-6 max-w-2xl text-[16px] leading-[1.5] text-steel font-cosmica">
+        <p
+          data-gsap="hero-sub"
+          className="mx-auto mt-6 max-w-2xl text-[16px] leading-[1.5] text-steel font-cosmica"
+        >
           A GIS-powered tourism intelligence platform connecting travelers, hotels,
           and destinations across Nepal.
         </p>
@@ -169,6 +182,7 @@ export default function Hero() {
         {/* CTA buttons */}
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <button
+            data-gsap="hero-cta"
             onClick={() => scrollTo('map')}
             className="group inline-flex items-center gap-2 rounded-[36px] bg-obsidian px-6 py-3 text-sm font-medium text-snow shadow-button transition-transform duration-200 active:scale-95 cursor-pointer"
           >
@@ -176,10 +190,11 @@ export default function Hero() {
             <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
           </button>
           <Link
-            href="/dashboard"
+            data-gsap="hero-cta"
+            href="/signup"
             className="group inline-flex items-center gap-2 rounded-[36px] border border-graphite bg-snow px-6 py-3 text-sm font-medium text-graphite transition-transform duration-200 active:scale-95"
           >
-            Open Portals
+            Get Started
             <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
           </Link>
         </div>

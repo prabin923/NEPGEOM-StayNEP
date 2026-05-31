@@ -1,3 +1,4 @@
+import HomeMotion from "@/components/animations/HomeMotion";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import ProblemSection from "@/components/ProblemSection";
@@ -12,6 +13,7 @@ import Footer from "@/components/Footer";
 export default function Home() {
   return (
     <main className="relative">
+      <HomeMotion />
       <Navbar />
       <Hero />
       <ProblemSection />

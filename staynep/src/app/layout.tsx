@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import SessionProvider from "@/components/providers/SessionProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -32,11 +33,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/logo.png" type="image/png" />
         <meta name="theme-color" content="#f4f4f5" />
       </head>
       <body className="min-h-screen bg-mist text-ink font-cosmica antialiased">
-        {children}
+        <SessionProvider>{children}</SessionProvider>
       </body>
     </html>
   );

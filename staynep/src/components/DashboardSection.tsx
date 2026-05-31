@@ -35,7 +35,7 @@ interface StatCardProps {
 
 function StatCard({ icon: Icon, value, label, change }: StatCardProps) {
   return (
-    <div className="group relative rounded-[28px] bg-fog p-6">
+    <div data-gsap-stagger-item className="group relative rounded-[28px] bg-fog p-6">
       <div className="relative z-10">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-snow">
@@ -140,7 +140,10 @@ export default function DashboardSection() {
         </div>
 
         {/* Stats Grid */}
-        <div className="mb-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div
+          data-gsap-stagger
+          className="mb-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5"
+        >
           {statCards.map((stat) => (
             <StatCard key={stat.label} {...stat} />
           ))}
@@ -149,7 +152,7 @@ export default function DashboardSection() {
         {/* Charts Row */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Area Chart - Monthly Tourist Arrivals */}
-          <div className="rounded-[28px] bg-mist p-6 border border-fog">
+          <div data-gsap-chart className="rounded-[28px] bg-mist p-6 border border-fog">
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <h3 className="text-[18px] font-semibold text-ink font-cosmica">
@@ -235,7 +238,7 @@ export default function DashboardSection() {
           </div>
 
           {/* Bar Chart - Regional Distribution */}
-          <div className="rounded-[28px] bg-mist p-6 border border-fog">
+          <div data-gsap-chart className="rounded-[28px] bg-mist p-6 border border-fog">
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <h3 className="text-[18px] font-semibold text-ink font-cosmica">

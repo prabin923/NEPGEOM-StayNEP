@@ -59,6 +59,7 @@ function FeatureCard({ feature }: { feature: Feature }) {
 
   return (
     <div
+      data-gsap-stagger-item
       className="group relative rounded-[36px] bg-snow p-7 transition-transform duration-250 ease-out hover:translate-y-[-2px] select-none"
     >
       <div className="relative z-10">
@@ -89,7 +90,7 @@ export default function FeaturesSection() {
     <section id="features" className="relative bg-mist py-20 sm:py-28">
       <div className="relative mx-auto max-w-[1200px] px-6 sm:px-8">
         {/* Section Header */}
-        <div className="max-w-2xl">
+        <div className="max-w-2xl" data-gsap-reveal>
           <p className="mb-3 text-[12px] font-semibold uppercase tracking-widest text-steel font-cosmica">
             Features
           </p>
@@ -103,7 +104,10 @@ export default function FeaturesSection() {
         </div>
 
         {/* Feature Grid */}
-        <div className="mt-16 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div
+          data-gsap-stagger
+          className="mt-16 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+        >
           {features.map((feature) => (
             <FeatureCard key={feature.title} feature={feature} />
           ))}

@@ -1,5 +1,9 @@
 import Link from "next/link";
-import { MapPin, Compass, Building2, Shield, ArrowRight } from "lucide-react";
+import { redirect } from "next/navigation";
+import { Compass, Building2, Shield, ArrowRight } from "lucide-react";
+import Logo from "@/components/Logo";
+import { auth } from "@/lib/auth";
+import { dashboardPathForRole } from "@/lib/auth-helpers";
 import { PORTAL_LIST } from "@/lib/roles";
 
 const portalMeta = {
@@ -23,40 +27,43 @@ const portalMeta = {
   },
 } as const;
 
-export default function DashboardHubPage() {
+export default async function DashboardHubPage() {
+  const session = await auth();
+
+  if (session?.user) {
+    redirect(dashboardPathForRole(session.user.role));
+  }
+
   return (
-    <div className="min-h-screen bg-[#0D1B3E]">
-      <header className="border-b border-white/10 bg-[#0D1B3E]/90 backdrop-blur-xl">
+    <div className="min-h-screen bg-mist">
+      <header className="border-b border-fog bg-snow/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#C9A24A]/15 ring-1 ring-[#C9A24A]/30">
-              <MapPin className="h-5 w-5 text-[#C9A24A]" />
-            </span>
-            <span className="text-xl font-bold">
-              <span className="text-white">Stay</span>
-              <span className="text-[#C9A24A]">NEP</span>
-            </span>
-          </Link>
-          <Link
-            href="/"
-            className="text-sm text-gray-400 transition hover:text-white"
-          >
-            Back to site
-          </Link>
+          <Logo href="/" size="md" />
+          <div className="flex items-center gap-4 text-sm">
+            <Link href="/login" className="text-steel hover:text-obsidian">
+              Sign in
+            </Link>
+            <Link
+              href="/signup"
+              className="rounded-[36px] bg-obsidian px-4 py-2 font-medium text-snow shadow-button"
+            >
+              Sign up
+            </Link>
+          </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
         <div className="mb-12 text-center">
-          <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-[#C9A24A]">
+          <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-steel">
             SaaS Platform
           </p>
-          <h1 className="text-3xl font-bold text-white sm:text-4xl">
+          <h1 className="text-3xl font-bold text-obsidian font-cosmica sm:text-4xl">
             Choose your portal
           </h1>
-          <p className="mx-auto mt-3 max-w-xl text-gray-400">
-            StayNEP serves travelers, hotel partners, and tourism authorities
-            with dedicated dashboards and tools.
+          <p className="mx-auto mt-3 max-w-xl text-steel">
+            Sign up as a traveler, hotel partner, or tourism authority to access
+            your dedicated dashboard.
           </p>
         </div>
 
@@ -65,40 +72,29 @@ export default function DashboardHubPage() {
             const meta = portalMeta[portal.role];
             const Icon = meta.icon;
             return (
-              <Link
+              <div
                 key={portal.role}
-                href={portal.basePath}
-                className="group relative flex flex-col rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:border-white/20 hover:bg-white/[0.08]"
+                className="flex flex-col rounded-[28px] border border-fog bg-snow p-6"
               >
-                <div
-                  className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl ring-1"
-                  style={{
-                    backgroundColor: portal.accentMuted,
-                    borderColor: `${portal.accent}40`,
-                  }}
-                >
-                  <Icon className="h-6 w-6" style={{ color: portal.accent }} />
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-fog">
+                  <Icon className="h-6 w-6 text-graphite" />
                 </div>
-                <h2 className="text-lg font-semibold text-white">{portal.title}</h2>
-                <p className="mt-1 text-sm text-gray-500">{portal.subtitle}</p>
-                <p className="mt-3 flex-1 text-sm leading-relaxed text-gray-400">
+                <h2 className="text-lg font-semibold text-obsidian">{portal.title}</h2>
+                <p className="mt-1 text-sm text-steel">{portal.subtitle}</p>
+                <p className="mt-3 flex-1 text-sm leading-relaxed text-steel">
                   {meta.description}
                 </p>
-                <span
-                  className="mt-6 inline-flex items-center gap-1 text-sm font-semibold transition group-hover:gap-2"
-                  style={{ color: portal.accent }}
+                <Link
+                  href="/signup"
+                  className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-obsidian hover:gap-2"
                 >
-                  {meta.cta}
+                  Sign up as {portal.role === "authorities" ? "authority" : portal.role}
                   <ArrowRight className="h-4 w-4" />
-                </span>
-              </Link>
+                </Link>
+              </div>
             );
           })}
         </div>
-
-        <p className="mt-10 text-center text-xs text-gray-600">
-          Demo mode — select a portal to explore role-specific dashboards.
-        </p>
       </main>
     </div>
   );

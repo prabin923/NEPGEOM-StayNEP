@@ -1,6 +1,7 @@
 'use client';
 
-import { MapPin, Mail } from 'lucide-react';
+import { Mail } from 'lucide-react';
+import { LogoImage } from '@/components/Logo';
 
 const TwitterIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -78,14 +79,7 @@ export default function Footer() {
           {/* Brand Column */}
           <div className="lg:col-span-4">
             {/* Logo */}
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-graphite">
-                <MapPin className="h-5 w-5 text-snow" strokeWidth={1.8} />
-              </div>
-              <span className="text-xl font-bold text-snow font-cosmica tracking-tight">
-                StayNEP
-              </span>
-            </div>
+            <LogoImage size="lg" className="!h-14" />
 
             {/* Tagline */}
             <p className="mt-4 max-w-xs text-[14px] leading-relaxed text-ash font-cosmica font-light">

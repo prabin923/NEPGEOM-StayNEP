@@ -1,3 +1,4 @@
+import { ArrowUpRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface PortalStatCardProps {
@@ -5,7 +6,6 @@ interface PortalStatCardProps {
   value: string;
   label: string;
   change?: string;
-  accent?: string;
 }
 
 export default function PortalStatCard({
@@ -13,23 +13,24 @@ export default function PortalStatCard({
   value,
   label,
   change,
-  accent = "#C9A24A",
 }: PortalStatCardProps) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm transition hover:border-white/20">
-      <div className="mb-3 flex items-center justify-between">
-        <div
-          className="flex h-10 w-10 items-center justify-center rounded-xl ring-1"
-          style={{ backgroundColor: `${accent}20`, borderColor: `${accent}40` }}
-        >
-          <Icon className="h-5 w-5" style={{ color: accent }} />
+    <div className="rounded-[28px] bg-fog p-6 transition hover:shadow-sm">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-snow">
+          <Icon className="h-5 w-5 text-graphite" />
         </div>
         {change && (
-          <span className="text-xs font-medium text-emerald-400">{change}</span>
+          <span className="inline-flex items-center gap-1 rounded-full border border-fog bg-snow px-2.5 py-1 text-xs font-medium text-obsidian">
+            <ArrowUpRight className="h-3 w-3" />
+            {change}
+          </span>
         )}
       </div>
-      <p className="text-2xl font-bold text-white">{value}</p>
-      <p className="mt-0.5 text-sm text-gray-400">{label}</p>
+      <p className="text-[28px] font-bold leading-none tracking-tight text-obsidian font-cosmica">
+        {value}
+      </p>
+      <p className="mt-2 text-[13px] text-steel">{label}</p>
     </div>
   );
 }

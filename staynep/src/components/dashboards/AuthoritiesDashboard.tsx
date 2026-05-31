@@ -21,7 +21,17 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import PortalStatCard from "@/components/portal/PortalStatCard";
-import { PORTALS } from "@/lib/roles";
+import {
+  PortalPageHeader,
+  PortalCard,
+  PortalSectionTitle,
+  PortalInnerCard,
+  PortalChartTooltip,
+  portalChartAxis,
+  StatusBadge,
+  portalTableHead,
+  portalTableRow,
+} from "@/components/portal/PortalUI";
 import {
   authorityStats,
   provinceMetrics,
@@ -30,145 +40,125 @@ import {
   policyReports,
 } from "@/data/saas-authorities";
 
-const accent = PORTALS.authorities.accent;
-
 export default function AuthoritiesDashboard() {
   return (
     <div className="space-y-8">
-      <div>
-        <p className="text-sm text-gray-400">Ministry of Culture, Tourism & Civil Aviation</p>
-        <h2 className="text-2xl font-bold text-white">National tourism command center</h2>
-      </div>
+      <PortalPageHeader
+        eyebrow="Ministry of Culture, Tourism & Civil Aviation"
+        title="National tourism command center"
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <PortalStatCard
           icon={Users}
           value={authorityStats.activeTourists.toLocaleString()}
           label="Active tourists"
-          accent={accent}
-          change="Live estimate"
+          change="Live"
         />
         <PortalStatCard
           icon={Building2}
           value={authorityStats.registeredHotels.toLocaleString()}
           label="Registered hotels"
-          accent={accent}
         />
         <PortalStatCard
           icon={Globe}
           value={String(authorityStats.provincesMonitored)}
           label="Provinces monitored"
-          accent={accent}
         />
         <PortalStatCard
           icon={TrendingUp}
           value={`${authorityStats.avgOccupancy}%`}
           label="National occupancy"
-          accent={accent}
         />
         <PortalStatCard
           icon={AlertTriangle}
           value={String(authorityStats.openIncidents)}
           label="Open incidents"
-          accent={accent}
-          change="Needs review"
+          change="Review"
         />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <h3 className="mb-4 font-semibold text-white">Tourist arrivals (national)</h3>
+        <PortalCard variant="mist">
+          <PortalSectionTitle title="Tourist arrivals (national)" />
           <ResponsiveContainer width="100%" height={260}>
             <AreaChart data={nationalTrend}>
               <defs>
                 <linearGradient id="authGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={accent} stopOpacity={0.4} />
-                  <stop offset="100%" stopColor={accent} stopOpacity={0} />
+                  <stop offset="0%" stopColor="#09090b" stopOpacity={0.12} />
+                  <stop offset="100%" stopColor="#09090b" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
-              <XAxis dataKey="month" tick={{ fill: "#9CA3AF", fontSize: 12 }} axisLine={false} tickLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#ececee" vertical={false} />
+              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={portalChartAxis.tick} />
               <YAxis
-                tick={{ fill: "#9CA3AF", fontSize: 12 }}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+                tick={portalChartAxis.tick}
+                tickFormatter={(v) => `${(Number(v) / 1000).toFixed(0)}k`}
               />
-              <Tooltip
-                contentStyle={{
-                  background: "#0D1B3E",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: 12,
-                }}
-              />
+              <Tooltip content={<PortalChartTooltip unit="tourists" />} />
               <Area
                 type="monotone"
                 dataKey="arrivals"
-                stroke={accent}
+                stroke="#09090b"
                 fill="url(#authGrad)"
                 strokeWidth={2}
               />
             </AreaChart>
           </ResponsiveContainer>
-        </section>
+        </PortalCard>
 
-        <section id="regions" className="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <h3 className="mb-4 font-semibold text-white">Regional distribution</h3>
+        <PortalCard id="regions" variant="snow">
+          <PortalSectionTitle title="Regional distribution" icon={Globe} />
           <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={provinceMetrics} layout="vertical" margin={{ left: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" horizontal={false} />
-              <XAxis type="number" tick={{ fill: "#9CA3AF", fontSize: 11 }} axisLine={false} tickLine={false} />
+            <BarChart data={provinceMetrics} layout="vertical" margin={{ left: 8 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#ececee" horizontal={false} />
+              <XAxis type="number" axisLine={false} tickLine={false} tick={portalChartAxis.tick} />
               <YAxis
                 type="category"
                 dataKey="province"
-                width={80}
-                tick={{ fill: "#9CA3AF", fontSize: 11 }}
+                width={88}
                 axisLine={false}
                 tickLine={false}
+                tick={portalChartAxis.tick}
               />
-              <Tooltip
-                contentStyle={{
-                  background: "#0D1B3E",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: 12,
-                }}
-              />
-              <Bar dataKey="tourists" fill={accent} radius={[0, 4, 4, 0]} />
+              <Tooltip content={<PortalChartTooltip unit="tourists" />} />
+              <Bar dataKey="tourists" fill="#09090b" radius={[0, 4, 4, 0]} maxBarSize={28} />
             </BarChart>
           </ResponsiveContainer>
-        </section>
+        </PortalCard>
       </div>
 
-      <section id="safety" className="rounded-2xl border border-white/10 bg-white/5 p-5">
-        <div className="mb-4 flex items-center gap-2">
-          <Shield className="h-5 w-5" style={{ color: accent }} />
-          <h3 className="font-semibold text-white">Province intelligence</h3>
-        </div>
+      <PortalCard id="safety" variant="snow">
+        <PortalSectionTitle title="Province intelligence" icon={Shield} />
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-white/10 text-gray-500">
-                <th className="pb-3 pr-4 font-medium">Province</th>
-                <th className="pb-3 pr-4 font-medium">Tourists</th>
-                <th className="pb-3 pr-4 font-medium">Hotels</th>
-                <th className="pb-3 font-medium">Occupancy</th>
+              <tr className={portalTableHead}>
+                <th className="pb-3 pr-4">Province</th>
+                <th className="pb-3 pr-4">Tourists</th>
+                <th className="pb-3 pr-4">Hotels</th>
+                <th className="pb-3">Occupancy</th>
               </tr>
             </thead>
             <tbody>
               {provinceMetrics.map((row) => (
-                <tr key={row.province} className="border-b border-white/5">
-                  <td className="py-3 pr-4 font-medium text-white">{row.province}</td>
-                  <td className="py-3 pr-4 text-gray-300">{row.tourists.toLocaleString()}</td>
-                  <td className="py-3 pr-4 text-gray-400">{row.hotels}</td>
+                <tr key={row.province} className={portalTableRow}>
+                  <td className="py-3 pr-4 font-medium text-ink">{row.province}</td>
+                  <td className="py-3 pr-4 text-graphite">
+                    {row.tourists.toLocaleString()}
+                  </td>
+                  <td className="py-3 pr-4 text-steel">{row.hotels}</td>
                   <td className="py-3">
                     <div className="flex items-center gap-2">
-                      <div className="h-1.5 flex-1 max-w-[100px] rounded-full bg-white/10">
+                      <div className="h-1.5 max-w-[100px] flex-1 rounded-full bg-fog">
                         <div
-                          className="h-full rounded-full"
-                          style={{ width: `${row.occupancy}%`, backgroundColor: accent }}
+                          className="h-full rounded-full bg-obsidian"
+                          style={{ width: `${row.occupancy}%` }}
                         />
                       </div>
-                      <span className="text-gray-400">{row.occupancy}%</span>
+                      <span className="text-steel">{row.occupancy}%</span>
                     </div>
                   </td>
                 </tr>
@@ -176,68 +166,56 @@ export default function AuthoritiesDashboard() {
             </tbody>
           </table>
         </div>
-      </section>
+      </PortalCard>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <section id="incidents" className="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <h3 className="mb-4 font-semibold text-white">Active incidents</h3>
+        <PortalCard id="incidents" variant="mist">
+          <PortalSectionTitle title="Active incidents" icon={AlertTriangle} />
           <ul className="space-y-3">
             {incidents.map((inc) => (
-              <li
-                key={inc.id}
-                className="rounded-xl border border-white/10 bg-[#0D1B3E]/50 p-4"
-              >
+              <PortalInnerCard key={inc.id}>
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="font-medium text-white">{inc.title}</p>
-                    <p className="text-sm text-gray-500">{inc.region}</p>
+                    <p className="font-medium text-ink">{inc.title}</p>
+                    <p className="text-sm text-steel">{inc.region}</p>
                   </div>
-                  <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                  <StatusBadge
+                    tone={
                       inc.severity === "high"
-                        ? "bg-red-500/20 text-red-400"
+                        ? "warning"
                         : inc.severity === "medium"
-                          ? "bg-amber-500/20 text-amber-400"
-                          : "bg-gray-500/20 text-gray-400"
-                    }`}
+                          ? "info"
+                          : "neutral"
+                    }
                   >
                     {inc.severity}
-                  </span>
+                  </StatusBadge>
                 </div>
-                <p className="mt-2 text-xs capitalize text-gray-500">Status: {inc.status}</p>
-              </li>
+                <p className="mt-2 text-xs capitalize text-steel">Status: {inc.status}</p>
+              </PortalInnerCard>
             ))}
           </ul>
-        </section>
+        </PortalCard>
 
-        <section id="reports" className="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <div className="mb-4 flex items-center gap-2">
-            <FileText className="h-4 w-4" style={{ color: accent }} />
-            <h3 className="font-semibold text-white">Policy & reports</h3>
-          </div>
+        <PortalCard id="reports" variant="snow">
+          <PortalSectionTitle title="Policy & reports" icon={FileText} />
           <ul className="space-y-2">
             {policyReports.map((report) => (
               <li
                 key={report.id}
-                className="flex items-center justify-between rounded-lg border border-white/5 px-3 py-3"
+                className="flex items-center justify-between rounded-[12px] border border-fog bg-mist px-3 py-3"
               >
                 <div>
-                  <p className="text-sm font-medium text-white">{report.name}</p>
-                  <p className="text-xs text-gray-500">{report.date}</p>
+                  <p className="text-sm font-medium text-ink">{report.name}</p>
+                  <p className="text-xs text-steel">{report.date}</p>
                 </div>
-                <span
-                  className={`rounded-full px-2 py-0.5 text-xs ${
-                    report.status === "published"
-                      ? "bg-emerald-500/20 text-emerald-400"
-                      : "bg-white/10 text-gray-400"
-                  }`}
-                >
+                <StatusBadge tone={report.status === "published" ? "success" : "neutral"}>
                   {report.status}
-                </span>
+                </StatusBadge>
               </li>
             ))}
           </ul>
-        </section>
+        </PortalCard>
       </div>
     </div>
   );

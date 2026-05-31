@@ -184,7 +184,7 @@ export default function FutureVision() {
     <section id="roadmap" className="relative bg-mist py-20 sm:py-28">
       <div className="relative mx-auto max-w-[1200px] px-6 sm:px-8">
         {/* Section Header */}
-        <div className="max-w-2xl">
+        <div className="max-w-2xl" data-gsap-reveal>
           <p className="mb-3 text-[12px] font-semibold uppercase tracking-widest text-steel font-cosmica">
             Roadmap
           </p>
@@ -205,7 +205,7 @@ export default function FutureVision() {
           <div className="absolute left-[19px] top-0 h-full w-px md:hidden bg-pebble" />
 
           {/* Phase Cards */}
-          <div className="flex flex-col gap-12 md:gap-16">
+          <div data-gsap-stagger className="flex flex-col gap-12 md:gap-16">
             {phases.map((phase, index) => (
               <TimelineCard key={phase.number} phase={phase} index={index} />
             ))}
