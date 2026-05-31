@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Keep Tailwind from scanning outside this app (wrong monorepo root = hung builds). */
+@source "../**/*.{ts,tsx}";
+
 @theme inline {
   --color-navy: #0D1B3E;
   --color-navy-dark: #060e24;
