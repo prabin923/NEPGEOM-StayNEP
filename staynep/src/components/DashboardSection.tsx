@@ -35,20 +35,19 @@ interface StatCardProps {
 
 function StatCard({ icon: Icon, value, label, change }: StatCardProps) {
   return (
-    <div className="group relative rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] hover:border-[#C9A24A]/30 hover:bg-white/[0.08]">
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[#C9A24A]/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+    <div className="group relative rounded-[28px] bg-fog p-6">
       <div className="relative z-10">
         <div className="mb-4 flex items-center justify-between">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#C9A24A]/10 ring-1 ring-[#C9A24A]/20">
-            <Icon className="h-5 w-5 text-[#C9A24A]" />
+          <div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-snow">
+            <Icon className="h-5 w-5 text-graphite" />
           </div>
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-400 ring-1 ring-emerald-500/20">
-            <ArrowUpRight className="h-3 w-3" />
+          <span className="inline-flex items-center gap-1 rounded-full bg-snow px-2.5 py-1 text-xs font-medium text-obsidian border border-fog">
+            <ArrowUpRight className="h-3 w-3 text-obsidian" />
             {change}
           </span>
         </div>
-        <p className="text-3xl font-bold tracking-tight text-white">{value}</p>
-        <p className="mt-1 text-sm text-gray-400">{label}</p>
+        <p className="text-[28px] font-bold tracking-tight text-obsidian font-cosmica leading-none">{value}</p>
+        <p className="mt-2 text-[13px] text-steel font-cosmica">{label}</p>
       </div>
     </div>
   );
@@ -63,11 +62,11 @@ interface CustomTooltipProps {
 function AreaChartTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-xl border border-white/10 bg-[#0D1B3E]/95 px-4 py-3 shadow-2xl backdrop-blur-md">
-      <p className="mb-1 text-xs font-medium text-gray-400">{label}</p>
-      <p className="text-lg font-bold text-white">
+    <div className="rounded-[12px] border border-fog bg-snow/95 px-4 py-3 shadow-sm backdrop-blur-md">
+      <p className="mb-1 text-xs font-medium text-steel font-cosmica">{label}</p>
+      <p className="text-lg font-bold text-obsidian font-cosmica">
         {payload[0].value.toLocaleString()}
-        <span className="ml-1.5 text-xs font-normal text-gray-400">tourists</span>
+        <span className="ml-1.5 text-xs font-normal text-steel"> tourists</span>
       </p>
     </div>
   );
@@ -76,11 +75,11 @@ function AreaChartTooltip({ active, payload, label }: CustomTooltipProps) {
 function BarChartTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-xl border border-white/10 bg-[#0D1B3E]/95 px-4 py-3 shadow-2xl backdrop-blur-md">
-      <p className="mb-1 text-xs font-medium text-gray-400">{label}</p>
-      <p className="text-lg font-bold text-white">
+    <div className="rounded-[12px] border border-fog bg-snow/95 px-4 py-3 shadow-sm backdrop-blur-md">
+      <p className="mb-1 text-xs font-medium text-steel font-cosmica">{label}</p>
+      <p className="text-lg font-bold text-obsidian font-cosmica">
         {payload[0].value.toLocaleString()}
-        <span className="ml-1.5 text-xs font-normal text-gray-400">tourists</span>
+        <span className="ml-1.5 text-xs font-normal text-steel"> tourists</span>
       </p>
     </div>
   );
@@ -123,36 +122,19 @@ export default function DashboardSection() {
   return (
     <section
       id="dashboard"
-      className="relative overflow-hidden bg-[#0D1B3E] py-24"
+      className="relative bg-snow rounded-[36px] mx-4 lg:mx-8 py-16 px-6 lg:px-12 my-8 border border-fog"
     >
-      {/* Background decorations */}
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-1/4 top-0 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-[#C9A24A]/[0.03] blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 h-[500px] w-[500px] translate-x-1/2 rounded-full bg-blue-500/[0.03] blur-3xl" />
-        {/* Grid pattern overlay */}
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage:
-              'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
-            backgroundSize: '60px 60px',
-          }}
-        />
-      </div>
-
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto max-w-[1200px]">
         {/* Section Header */}
         <div className="mb-16 text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#C9A24A]/20 bg-[#C9A24A]/10 px-4 py-1.5">
-            <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#C9A24A]" />
-            <span className="text-xs font-semibold uppercase tracking-widest text-[#C9A24A]">
-              Live Analytics
-            </span>
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-fog px-4 py-1.5 text-[12px] font-medium text-graphite">
+            <div className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-obsidian" />
+            Live Analytics
           </div>
-          <h2 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">
+          <h2 className="text-[32px] font-bold tracking-tight text-obsidian font-cosmica leading-none">
             Tourism Intelligence Dashboard
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-gray-400">
+          <p className="mx-auto mt-4 text-[16px] text-steel font-cosmica max-w-xl">
             Real-time analytics and insights powering smarter tourism decisions
           </p>
         </div>
@@ -167,18 +149,17 @@ export default function DashboardSection() {
         {/* Charts Row */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Area Chart - Monthly Tourist Arrivals */}
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
+          <div className="rounded-[28px] bg-mist p-6 border border-fog">
             <div className="mb-6 flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-white">
+                <h3 className="text-[18px] font-semibold text-ink font-cosmica">
                   Monthly Tourist Arrivals
                 </h3>
-                <p className="mt-0.5 text-sm text-gray-400">
+                <p className="mt-1 text-[14px] text-steel font-cosmica">
                   Visitor trends over the past 12 months
                 </p>
               </div>
-              <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400 ring-1 ring-emerald-500/20">
-                <ArrowUpRight className="h-3 w-3" />
+              <div className="flex items-center gap-1.5 rounded-full bg-snow px-3 py-1 text-[12px] font-medium text-obsidian border border-fog">
                 18.2% YoY
               </div>
             </div>
@@ -189,7 +170,7 @@ export default function DashboardSection() {
               >
                 <defs>
                   <linearGradient
-                    id="goldGradient"
+                    id="obsidianGradient"
                     x1="0"
                     y1="0"
                     x2="0"
@@ -197,32 +178,32 @@ export default function DashboardSection() {
                   >
                     <stop
                       offset="0%"
-                      stopColor="#C9A24A"
-                      stopOpacity={0.4}
+                      stopColor="#09090b"
+                      stopOpacity={0.15}
                     />
                     <stop
                       offset="95%"
-                      stopColor="#C9A24A"
-                      stopOpacity={0.02}
+                      stopColor="#09090b"
+                      stopOpacity={0.01}
                     />
                   </linearGradient>
                 </defs>
                 <CartesianGrid
                   strokeDasharray="3 3"
-                  stroke="rgba(255,255,255,0.06)"
+                  stroke="#ececee"
                   vertical={false}
                 />
                 <XAxis
                   dataKey="month"
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: '#9CA3AF', fontSize: 12 }}
+                  tick={{ fill: '#a1a1aa', fontSize: 11, fontFamily: 'var(--font-cosmica)' }}
                   dy={10}
                 />
                 <YAxis
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: '#9CA3AF', fontSize: 12 }}
+                  tick={{ fill: '#a1a1aa', fontSize: 11, fontFamily: 'var(--font-cosmica)' }}
                   tickFormatter={(value: number) =>
                     value >= 1000 ? `${(value / 1000).toFixed(0)}k` : `${value}`
                   }
@@ -231,21 +212,21 @@ export default function DashboardSection() {
                 <Tooltip
                   content={<AreaChartTooltip />}
                   cursor={{
-                    stroke: 'rgba(201,162,74,0.2)',
-                    strokeWidth: 1,
+                    stroke: 'rgba(9,9,11,0.1)',
+                    strokeWidth: 1.5,
                   }}
                 />
                 <Area
                   type="monotone"
                   dataKey="tourists"
-                  stroke="#C9A24A"
+                  stroke="#09090b"
                   strokeWidth={2.5}
-                  fill="url(#goldGradient)"
+                  fill="url(#obsidianGradient)"
                   dot={false}
                   activeDot={{
                     r: 5,
-                    fill: '#C9A24A',
-                    stroke: '#0D1B3E',
+                    fill: '#09090b',
+                    stroke: '#ffffff',
                     strokeWidth: 2,
                   }}
                 />
@@ -254,17 +235,17 @@ export default function DashboardSection() {
           </div>
 
           {/* Bar Chart - Regional Distribution */}
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
+          <div className="rounded-[28px] bg-mist p-6 border border-fog">
             <div className="mb-6 flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-white">
+                <h3 className="text-[18px] font-semibold text-ink font-cosmica">
                   Regional Distribution
                 </h3>
-                <p className="mt-0.5 text-sm text-gray-400">
+                <p className="mt-1 text-[14px] text-steel font-cosmica">
                   Tourist traffic by region
                 </p>
               </div>
-              <div className="flex items-center gap-1.5 rounded-full bg-[#C9A24A]/10 px-3 py-1 text-xs font-medium text-[#C9A24A] ring-1 ring-[#C9A24A]/20">
+              <div className="flex items-center gap-1.5 rounded-full bg-snow px-3 py-1 text-[12px] font-medium text-obsidian border border-fog">
                 6 Regions
               </div>
             </div>
@@ -273,44 +254,24 @@ export default function DashboardSection() {
                 data={regionalData}
                 margin={{ top: 5, right: 10, left: -10, bottom: 0 }}
               >
-                <defs>
-                  <linearGradient
-                    id="barGoldGradient"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop
-                      offset="0%"
-                      stopColor="#C9A24A"
-                      stopOpacity={0.9}
-                    />
-                    <stop
-                      offset="100%"
-                      stopColor="#C9A24A"
-                      stopOpacity={0.4}
-                    />
-                  </linearGradient>
-                </defs>
                 <CartesianGrid
                   strokeDasharray="3 3"
-                  stroke="rgba(255,255,255,0.06)"
+                  stroke="#ececee"
                   vertical={false}
                 />
                 <XAxis
                   dataKey="region"
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: '#9CA3AF', fontSize: 11 }}
+                  tick={{ fill: '#a1a1aa', fontSize: 10, fontFamily: 'var(--font-cosmica)' }}
                   dy={10}
                   interval={0}
-                  angle={-20}
+                  angle={-15}
                 />
                 <YAxis
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: '#9CA3AF', fontSize: 12 }}
+                  tick={{ fill: '#a1a1aa', fontSize: 11, fontFamily: 'var(--font-cosmica)' }}
                   tickFormatter={(value: number) =>
                     value >= 1000 ? `${(value / 1000).toFixed(0)}k` : `${value}`
                   }
@@ -319,15 +280,14 @@ export default function DashboardSection() {
                 <Tooltip
                   content={<BarChartTooltip />}
                   cursor={{
-                    fill: 'rgba(201,162,74,0.06)',
-                    radius: 4,
+                    fill: 'rgba(9,9,11,0.02)',
                   }}
                 />
                 <Bar
                   dataKey="tourists"
-                  fill="url(#barGoldGradient)"
+                  fill="#09090b"
                   radius={[6, 6, 0, 0]}
-                  maxBarSize={48}
+                  maxBarSize={40}
                 />
               </BarChart>
             </ResponsiveContainer>

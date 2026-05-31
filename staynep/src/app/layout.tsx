@@ -30,12 +30,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="antialiased">
+    <html lang="en">
       <head>
         <link rel="icon" href="/favicon.ico" />
-        <meta name="theme-color" content="#0D1B3E" />
+        <meta name="theme-color" content="#f4f4f5" />
       </head>
-      <body className="min-h-screen bg-navy text-white">{children}</body>
+      <body className="min-h-screen bg-mist text-ink font-cosmica antialiased">
+        {children}
+      </body>
     </html>
   );
 }
