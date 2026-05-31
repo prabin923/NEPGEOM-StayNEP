@@ -41,10 +41,12 @@ export default function RoleSelector({
   name = "role",
 }: RoleSelectorProps) {
   return (
-    <div className="space-y-2">
-      <p className="text-sm font-medium text-obsidian">I am a…</p>
+    <fieldset className="space-y-3">
+      <legend className="text-sm font-medium text-obsidian font-cosmica">
+        I am a…
+      </legend>
       <input type="hidden" name={name} value={value} />
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {roles.map((role) => {
           const Icon = role.icon;
           const selected = value === role.value;
@@ -52,28 +54,36 @@ export default function RoleSelector({
             <button
               key={role.value}
               type="button"
+              aria-pressed={selected}
               onClick={() => onChange(role.value)}
-              className={`rounded-[20px] border p-4 text-left transition ${
+              className={`group flex min-h-[132px] flex-col rounded-[20px] border p-4 text-left transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-obsidian/40 ${
                 selected
-                  ? "border-obsidian bg-obsidian text-snow shadow-button"
-                  : "border-fog bg-snow text-ink hover:border-graphite"
+                  ? "border-obsidian bg-obsidian text-snow shadow-button scale-[1.02]"
+                  : "border-fog bg-snow text-ink hover:border-graphite hover:bg-mist/40"
               }`}
             >
-              <Icon
-                className={`mb-2 h-5 w-5 ${selected ? "text-snow" : "text-graphite"}`}
-              />
-              <p className="text-sm font-semibold">{role.label}</p>
-              <p
-                className={`mt-1 text-xs leading-relaxed ${
-                  selected ? "text-snow/80" : "text-steel"
+              <span
+                className={`mb-3 flex h-10 w-10 items-center justify-center rounded-[12px] transition-colors ${
+                  selected ? "bg-snow/15" : "bg-fog group-hover:bg-fog/80"
+                }`}
+              >
+                <Icon
+                  className={`h-5 w-5 ${selected ? "text-snow" : "text-graphite"}`}
+                  strokeWidth={1.8}
+                />
+              </span>
+              <span className="text-sm font-semibold font-cosmica">{role.label}</span>
+              <span
+                className={`mt-1.5 flex-1 text-xs leading-relaxed ${
+                  selected ? "text-snow/75" : "text-steel"
                 }`}
               >
                 {role.description}
-              </p>
+              </span>
             </button>
           );
         })}
       </div>
-    </div>
+    </fieldset>
   );
 }

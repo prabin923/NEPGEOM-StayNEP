@@ -39,8 +39,16 @@ import {
   incidents,
   policyReports,
 } from "@/data/saas-authorities";
+import TouristLocationsMap from "@/components/map/TouristLocationsMap";
+import type { TouristMapMarker } from "@/lib/traveler-locations";
 
-export default function AuthoritiesDashboard() {
+interface AuthoritiesDashboardProps {
+  tourists?: TouristMapMarker[];
+}
+
+export default function AuthoritiesDashboard({
+  tourists = [],
+}: AuthoritiesDashboardProps) {
   return (
     <div className="space-y-8">
       <PortalPageHeader
@@ -48,11 +56,20 @@ export default function AuthoritiesDashboard() {
         title="National tourism command center"
       />
 
+      <PortalCard id="tourist-map" variant="snow">
+        <PortalSectionTitle
+          title="Live traveler map"
+          subtitle="GPS locations shared by signed-in StayNEP travelers across Nepal"
+          icon={Globe}
+        />
+        <TouristLocationsMap initialTourists={tourists} defaultFilter="tourists" />
+      </PortalCard>
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <PortalStatCard
           icon={Users}
-          value={authorityStats.activeTourists.toLocaleString()}
-          label="Active tourists"
+          value={String(tourists.length || authorityStats.activeTourists)}
+          label="Travelers on map"
           change="Live"
         />
         <PortalStatCard

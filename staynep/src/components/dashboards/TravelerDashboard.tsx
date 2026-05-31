@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import {
   Compass,
@@ -9,6 +10,15 @@ import {
   Calendar,
   Bell,
 } from "lucide-react";
+import type { Hotel } from "@/data/hotels";
+import type { Attraction } from "@/data/attractions";
+import {
+  getWithinRadiusKm,
+  TRAVELER_NEARBY_RADIUS_KM,
+} from "@/lib/geo";
+import NearbyDestinationsPanel from "@/components/map/NearbyDestinationsPanel";
+import TouristWeatherBoard from "@/components/weather/TouristWeatherBoard";
+import TouristWeatherWidget from "@/components/weather/TouristWeatherWidget";
 import {
   AreaChart,
   Area,
@@ -19,6 +29,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import PortalStatCard from "@/components/portal/PortalStatCard";
+import TravelerLocationReporter from "@/components/traveler/TravelerLocationReporter";
 import {
   PortalPageHeader,
   PortalCard,
@@ -34,6 +45,7 @@ import {
   savedPlaces,
   travelerAlerts,
   exploreActivity,
+  travelerWeatherHubs,
 } from "@/data/saas-traveler";
 import { hotels } from "@/data/hotels";
 import { attractions } from "@/data/attractions";
@@ -49,9 +61,35 @@ const LeafletMap = dynamic(() => import("@/components/LeafletMap"), {
 });
 
 export default function TravelerDashboard() {
+  const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
+  const [flyToPosition, setFlyToPosition] = useState<[number, number] | null>(
+    null
+  );
+
+  const nearbyDestinations = useMemo(() => {
+    if (!selectedHotel) return [];
+    return getWithinRadiusKm(
+      selectedHotel,
+      attractions,
+      TRAVELER_NEARBY_RADIUS_KM
+    );
+  }, [selectedHotel]);
+
+  const weatherLocations = useMemo(
+    () =>
+      upcomingTrips.map((trip) => ({
+        id: `trip-${trip.id}`,
+        label: trip.destination,
+        lat: trip.lat,
+        lng: trip.lng,
+      })),
+    []
+  );
+
   return (
     <div className="space-y-8">
       <PortalPageHeader eyebrow="Welcome back" title="Your Nepal journey" />
+      <TravelerLocationReporter />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <PortalStatCard
@@ -76,6 +114,14 @@ export default function TravelerDashboard() {
           label="Safety score"
         />
       </div>
+
+      <TouristWeatherBoard
+        locations={
+          weatherLocations.length > 0
+            ? weatherLocations
+            : travelerWeatherHubs
+        }
+      />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <PortalCard id="trips" variant="snow">
@@ -129,15 +175,40 @@ export default function TravelerDashboard() {
       <PortalCard id="map" variant="snow">
         <PortalSectionTitle
           title="Explore nearby"
-          subtitle="Hotels, attractions & emergency services"
+          subtitle={`Select a hotel to see destinations within ${TRAVELER_NEARBY_RADIUS_KM} km`}
           icon={MapPin}
         />
+        {selectedHotel && (
+          <div className="mb-4 space-y-3">
+            <TouristWeatherWidget
+              lat={selectedHotel.lat}
+              lng={selectedHotel.lng}
+              label={`${selectedHotel.name}, ${selectedHotel.district}`}
+              compact
+            />
+            <NearbyDestinationsPanel
+              hotel={selectedHotel}
+              nearby={nearbyDestinations}
+              radiusKm={TRAVELER_NEARBY_RADIUS_KM}
+              onClear={() => setSelectedHotel(null)}
+              onSelectAttraction={(attr: Attraction) =>
+                setFlyToPosition([attr.lat, attr.lng])
+              }
+              compact
+            />
+          </div>
+        )}
         <div className="overflow-hidden rounded-[28px] border border-fog">
           <LeafletMap
             hotels={hotels}
             attractions={attractions}
             emergencyServices={emergencyServices}
             filter="all"
+            selectedHotelId={selectedHotel?.id ?? null}
+            onHotelSelect={setSelectedHotel}
+            flyToPosition={flyToPosition}
+            nearbyRadiusKm={TRAVELER_NEARBY_RADIUS_KM}
+            enableHotelExplore
           />
         </div>
       </PortalCard>

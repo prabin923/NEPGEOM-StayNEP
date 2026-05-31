@@ -21,6 +21,12 @@ if (existsSync(nextDir)) {
   rmSync(nextDir, { recursive: true, force: true });
 }
 
+try {
+  run("npx prisma generate");
+} catch {
+  console.warn("prisma generate failed — run npm run db:push if models are missing.\n");
+}
+
 console.log("Starting dev server (webpack) on http://localhost:3000 …\n");
 
 const child = spawn("npx", ["next", "dev", "--webpack", "-p", "3000"], {

@@ -13,13 +13,198 @@ enum Role {
   AUTHORITIES
 }
 
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CHECKED_IN
+  CHECKED_OUT
+  CANCELLED
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  NORMAL
+  HIGH
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LEAVE
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+}
+
 model User {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  passwordHash String
-  role         Role
-  organization String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String            @id @default(cuid())
+  name             String
+  email            String            @unique
+  passwordHash     String
+  role             Role
+  organization     String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  property         Property?
+  travelerLocation TravelerLocation?
+}
+
+model TravelerLocation {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  latitude  Float
+  longitude Float
+  label     String?
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
+
+model Property {
+  id                 String              @id @default(cuid())
+  ownerId            String              @unique
+  owner              User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name               String
+  district           String              @default("Nepal")
+  address            String?
+  phone              String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  rooms              Room[]
+  bookings           Booking[]
+  diningOrders       DiningOrder[]
+  inventoryItems     InventoryItem[]
+  housekeepingTasks  HousekeepingTask[]
+  staffMembers       StaffMember[]
+  invoices           Invoice[]
+  notifications      Notification[]
+}
+
+model Room {
+  id                String             @id @default(cuid())
+  propertyId        String
+  property          Property           @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  name              String
+  totalUnits        Int
+  ratePerNight      Int
+  bookings          Booking[]
+  housekeepingTasks HousekeepingTask[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+}
+
+model Booking {
+  id         String        @id @default(cuid())
+  propertyId String
+  property   Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  roomId     String
+  room       Room          @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  guestName  String
+  guestEmail String?
+  guestPhone String?
+  checkIn    DateTime
+  checkOut   DateTime
+  units      Int           @default(1)
+  status     BookingStatus @default(CONFIRMED)
+  notes      String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  invoices   Invoice[]
+}
+
+model DiningOrder {
+  id          String   @id @default(cuid())
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  guestName   String?
+  description String
+  amount      Int
+  orderedAt   DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
+
+model InventoryItem {
+  id          String   @id @default(cuid())
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  name        String
+  quantity    Int
+  unit        String   @default("pcs")
+  minQuantity Int      @default(5)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model HousekeepingTask {
+  id         String       @id @default(cuid())
+  propertyId String
+  property   Property     @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  roomId     String?
+  room       Room?        @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  title      String
+  status     TaskStatus   @default(PENDING)
+  priority   TaskPriority @default(NORMAL)
+  notes      String?
+  dueDate    DateTime?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+}
+
+model StaffMember {
+  id            String             @id @default(cuid())
+  propertyId    String
+  property      Property           @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  name          String
+  role          String
+  email         String?
+  phone         String?
+  monthlySalary Int                @default(0)
+  attendances   AttendanceRecord[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+}
+
+model AttendanceRecord {
+  id      String           @id @default(cuid())
+  staffId String
+  staff   StaffMember      @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  date    DateTime
+  status  AttendanceStatus @default(PRESENT)
+
+  @@unique([staffId, date])
+}
+
+model Invoice {
+  id          String        @id @default(cuid())
+  propertyId  String
+  property    Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  bookingId   String?
+  booking     Booking?      @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  guestName   String
+  description String
+  amount      Int
+  status      InvoiceStatus @default(DRAFT)
+  dueDate     DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model Notification {
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  title      String
+  message    String
+  read       Boolean  @default(false)
+  sourceKey  String?  @unique
+  createdAt  DateTime @default(now())
 }

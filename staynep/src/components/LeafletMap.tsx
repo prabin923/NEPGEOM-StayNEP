@@ -2,92 +2,293 @@
 
 import 'leaflet/dist/leaflet.css';
 
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { useEffect, useMemo } from 'react';
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  ZoomControl,
+  Circle,
+  useMap,
+} from 'react-leaflet';
 import L from 'leaflet';
 import type { Hotel } from '@/data/hotels';
 import type { Attraction } from '@/data/attractions';
 import type { EmergencyService } from '@/data/emergency';
+import type { TouristMapMarker } from '@/lib/traveler-locations';
+import {
+  getWithinRadiusKm,
+  formatDistanceKm,
+  distanceKm,
+  TRAVELER_NEARBY_RADIUS_KM,
+} from '@/lib/geo';
 
-// ── Custom colored div icons ────────────────────────────────────────────────
-function createColorIcon(color: string, glow: string) {
+function createColorIcon(
+  color: string,
+  ring: string,
+  size = 22,
+  extra = ''
+) {
+  const half = size / 2;
   return L.divIcon({
-    className: '',
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-    popupAnchor: [0, -14],
+    className: 'staynep-marker',
+    iconSize: [size, size],
+    iconAnchor: [half, half],
+    popupAnchor: [0, -half - 2],
     html: `<div style="
-      width:24px;height:24px;border-radius:50%;
+      width:${size}px;height:${size}px;border-radius:50%;
       background:${color};
-      border:3px solid #fff;
-      box-shadow:0 0 8px ${glow}, 0 2px 6px rgba(0,0,0,.15);
-      transition:transform .15s;
+      border:2.5px solid #ffffff;
+      box-shadow:0 0 0 1px ${ring}, 0 4px 10px rgba(9,9,11,0.12);
+      ${extra}
     "></div>`,
   });
 }
 
 const icons = {
-  hotel: createColorIcon('#3B82F6', 'rgba(59,130,246,.3)'),
-  attraction: createColorIcon('#22C55E', 'rgba(34,197,94,.3)'),
-  hospital: createColorIcon('#EF4444', 'rgba(239,68,68,.3)'),
-  police: createColorIcon('#F97316', 'rgba(249,115,22,.3)'),
-  shelter: createColorIcon('#A855F7', 'rgba(168,85,247,.3)'),
+  hotel: createColorIcon('#3b82f6', 'rgba(59,130,246,0.35)'),
+  hotelSelected: createColorIcon(
+    '#2563eb',
+    'rgba(37,99,235,0.5)',
+    30,
+    'box-shadow:0 0 0 4px rgba(37,99,235,0.2), 0 0 0 1px rgba(37,99,235,0.5), 0 6px 16px rgba(9,9,11,0.18);'
+  ),
+  hotelDimmed: createColorIcon('#93c5fd', 'rgba(147,197,253,0.4)', 18, 'opacity:0.55;'),
+  attraction: createColorIcon('#10b981', 'rgba(16,185,129,0.35)'),
+  attractionNearby: createColorIcon(
+    '#059669',
+    'rgba(5,150,105,0.45)',
+    26,
+    'box-shadow:0 0 0 3px rgba(16,185,129,0.25), 0 4px 12px rgba(9,9,11,0.15);'
+  ),
+  hospital: createColorIcon('#ef4444', 'rgba(239,68,68,0.35)'),
+  police: createColorIcon('#f97316', 'rgba(249,115,22,0.35)'),
+  shelter: createColorIcon('#8b5cf6', 'rgba(139,92,246,0.35)'),
+  tourist: createColorIcon(
+    '#ec4899',
+    'rgba(236,72,153,0.45)',
+    24,
+    'box-shadow:0 0 0 3px rgba(236,72,153,0.2), 0 4px 12px rgba(9,9,11,0.12);'
+  ),
 } as const;
 
-// ── Types ───────────────────────────────────────────────────────────────────
 export type FilterType =
   | 'all'
   | 'hotels'
   | 'attractions'
   | 'hospitals'
   | 'police'
-  | 'shelters';
+  | 'shelters'
+  | 'tourists';
 
 interface LeafletMapProps {
   hotels: Hotel[];
   attractions: Attraction[];
   emergencyServices: EmergencyService[];
   filter: FilterType;
+  selectedHotelId?: number | null;
+  onHotelSelect?: (hotel: Hotel | null) => void;
+  nearbyRadiusKm?: number;
+  /** When true, clicking a hotel reveals destinations within radiusKm */
+  enableHotelExplore?: boolean;
+  flyToPosition?: [number, number] | null;
+  tourists?: TouristMapMarker[];
 }
 
-// ── Stars helper ────────────────────────────────────────────────────────────
 function Stars({ rating }: { rating: number }) {
   const full = Math.floor(rating);
-  const half = rating - full >= 0.5;
   return (
-    <span className="inline-flex items-center gap-[1px]" aria-label={`${rating} stars`}>
+    <span className="inline-flex items-center gap-0.5" aria-label={`${rating} stars`}>
       {Array.from({ length: full }).map((_, i) => (
-        <svg key={i} className="w-3.5 h-3.5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+        <svg
+          key={i}
+          className="h-3.5 w-3.5 text-obsidian"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z" />
         </svg>
       ))}
-      {half && (
-        <svg className="w-3.5 h-3.5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-          <defs>
-            <linearGradient id="halfStar">
-              <stop offset="50%" stopColor="currentColor" />
-              <stop offset="50%" stopColor="#D1D5DB" />
-            </linearGradient>
-          </defs>
-          <path fill="url(#halfStar)" d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z" />
-        </svg>
-      )}
-      <span className="ml-1 text-xs text-gray-500">{rating}</span>
+      <span className="ml-1 text-xs text-steel">{rating}</span>
     </span>
   );
 }
 
-// ── Component ───────────────────────────────────────────────────────────────
+function PopupBadge({
+  children,
+  tone = 'neutral',
+}: {
+  children: React.ReactNode;
+  tone?: 'hotel' | 'attraction' | 'hospital' | 'police' | 'shelter' | 'neutral';
+}) {
+  const tones = {
+    hotel: 'bg-blue-50 text-blue-700',
+    attraction: 'bg-emerald-50 text-emerald-700',
+    hospital: 'bg-red-50 text-red-700',
+    police: 'bg-orange-50 text-orange-700',
+    shelter: 'bg-violet-50 text-violet-700',
+    neutral: 'bg-fog text-graphite',
+  };
+  return (
+    <span
+      className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${tones[tone]}`}
+    >
+      {children}
+    </span>
+  );
+}
+
+function MapViewController({
+  selectedHotel,
+  nearbyAttractions,
+  flyToPosition,
+}: {
+  selectedHotel: Hotel | null;
+  nearbyAttractions: Attraction[];
+  flyToPosition: [number, number] | null;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (flyToPosition) {
+      map.flyTo(flyToPosition, 14, { duration: 0.85 });
+      return;
+    }
+    if (!selectedHotel) return;
+
+    if (nearbyAttractions.length > 0) {
+      const bounds = L.latLngBounds([
+        [selectedHotel.lat, selectedHotel.lng],
+        ...nearbyAttractions.map((a) => [a.lat, a.lng] as [number, number]),
+      ]);
+      map.flyToBounds(bounds, {
+        padding: [56, 56],
+        maxZoom: 14,
+        duration: 1.1,
+      });
+    } else {
+      map.flyTo([selectedHotel.lat, selectedHotel.lng], 12, { duration: 1.1 });
+    }
+  }, [selectedHotel, nearbyAttractions, flyToPosition, map]);
+
+  return null;
+}
+
+function HotelPopupContent({
+  hotel,
+  nearby,
+  radiusKm,
+  onExplore,
+  canExplore,
+}: {
+  hotel: Hotel;
+  nearby: { name: string; category: string; distanceKm: number }[];
+  radiusKm: number;
+  onExplore: () => void;
+  canExplore: boolean;
+}) {
+  return (
+    <div className="min-w-[220px] font-cosmica">
+      <div className="mb-2 flex items-start gap-2">
+        <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-blue-500" />
+        <div>
+          <h3 className="text-sm font-semibold leading-tight text-obsidian">
+            {hotel.name}
+          </h3>
+          <p className="mt-0.5 text-xs text-steel">{hotel.district}</p>
+        </div>
+      </div>
+      <div className="space-y-2 border-t border-fog pt-2 text-xs">
+        <div className="flex items-center justify-between gap-2">
+          <PopupBadge tone="hotel">{hotel.type}</PopupBadge>
+          <Stars rating={hotel.rating} />
+        </div>
+        <p className="text-steel">
+          <span className="font-medium text-graphite">Rooms </span>
+          <span className="font-semibold text-obsidian">{hotel.availableRooms}</span>
+          <span className="text-steel"> / {hotel.totalRooms}</span>
+        </p>
+        <p className="font-medium text-obsidian">{hotel.priceRange}</p>
+        {canExplore && (
+          <button
+            type="button"
+            onClick={onExplore}
+            className="mt-1 w-full rounded-[36px] bg-obsidian px-3 py-2 text-xs font-medium text-snow transition hover:opacity-90"
+          >
+            Show destinations within {radiusKm} km
+          </button>
+        )}
+        {nearby.length > 0 && (
+          <div className="mt-2 rounded-[12px] bg-mist p-2">
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-steel">
+              Nearby ({nearby.length})
+            </p>
+            <ul className="max-h-28 space-y-1 overflow-y-auto">
+              {nearby.slice(0, 5).map((place) => (
+                <li
+                  key={place.name}
+                  className="flex justify-between gap-2 text-[11px] text-graphite"
+                >
+                  <span className="truncate">{place.name}</span>
+                  <span className="shrink-0 text-steel">
+                    {formatDistanceKm(place.distanceKm)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function LeafletMap({
   hotels: hotelData,
   attractions: attractionData,
   emergencyServices: emergencyData,
   filter,
+  selectedHotelId = null,
+  onHotelSelect,
+  nearbyRadiusKm = TRAVELER_NEARBY_RADIUS_KM,
+  enableHotelExplore = true,
+  flyToPosition = null,
+  tourists = [],
 }: LeafletMapProps) {
-  const showHotels = filter === 'all' || filter === 'hotels';
-  const showAttractions = filter === 'all' || filter === 'attractions';
-  const showHospitals = filter === 'all' || filter === 'hospitals';
-  const showPolice = filter === 'all' || filter === 'police';
-  const showShelters = filter === 'all' || filter === 'shelters';
+  const selectedHotel = useMemo(
+    () => hotelData.find((h) => h.id === selectedHotelId) ?? null,
+    [hotelData, selectedHotelId]
+  );
+
+  const nearbyAttractions = useMemo(() => {
+    if (!selectedHotel) return [];
+    return getWithinRadiusKm(
+      selectedHotel,
+      attractionData,
+      nearbyRadiusKm
+    );
+  }, [selectedHotel, attractionData, nearbyRadiusKm]);
+
+  const nearbyIds = useMemo(
+    () => new Set(nearbyAttractions.map((a) => a.id)),
+    [nearbyAttractions]
+  );
+
+  const exploreMode = enableHotelExplore && selectedHotel !== null;
+
+  const touristsOnly = filter === 'tourists';
+  const showHotels = !touristsOnly && (filter === 'all' || filter === 'hotels');
+  const showAttractions =
+    !touristsOnly &&
+    (filter === 'all' || filter === 'attractions' || exploreMode);
+  const showEmergency =
+    !touristsOnly &&
+    (filter === 'all' ||
+      filter === 'hospitals' ||
+      filter === 'police' ||
+      filter === 'shelters');
+  const showTourists = filter === 'all' || filter === 'tourists';
 
   const filteredEmergency = emergencyData.filter((e) => {
     if (filter === 'all') return true;
@@ -97,87 +298,184 @@ export default function LeafletMap({
     return false;
   });
 
+  const handleHotelClick = (hotel: Hotel) => {
+    if (!enableHotelExplore || !onHotelSelect) return;
+    onHotelSelect(
+      selectedHotelId === hotel.id ? null : hotel
+    );
+  };
+
   return (
-    <div className="relative overflow-hidden w-full">
+    <div className="relative w-full overflow-hidden">
       <MapContainer
         center={[28.3949, 84.124]}
         zoom={7}
-        scrollWheelZoom={false}
-        style={{ height: '500px', width: '100%' }}
-        className="z-0"
+        minZoom={6}
+        maxZoom={18}
+        scrollWheelZoom
+        zoomControl={false}
+        className="z-0 staynep-map"
+        style={{ height: '420px', width: '100%' }}
       >
+        <ZoomControl position="topright" />
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          maxZoom={19}
+          maxNativeZoom={19}
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> · <a href="https://carto.com/">CARTO</a>'
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
 
-        {/* Hotels */}
+        {exploreMode && selectedHotel && (
+          <>
+            <Circle
+              center={[selectedHotel.lat, selectedHotel.lng]}
+              radius={nearbyRadiusKm * 1000}
+              pathOptions={{
+                color: '#09090b',
+                weight: 1.5,
+                opacity: 0.45,
+                fillColor: '#09090b',
+                fillOpacity: 0.05,
+                dashArray: '8 10',
+              }}
+            />
+            <MapViewController
+              selectedHotel={selectedHotel}
+              nearbyAttractions={nearbyAttractions}
+              flyToPosition={flyToPosition}
+            />
+          </>
+        )}
+
         {showHotels &&
-          hotelData.map((hotel) => (
-            <Marker
-              key={`hotel-${hotel.id}`}
-              position={[hotel.lat, hotel.lng]}
-              icon={icons.hotel}
-            >
-              <Popup>
-                <div className="min-w-[200px] font-sans">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0" />
-                    <h3 className="text-sm font-bold text-gray-900 leading-tight">
-                      {hotel.name}
-                    </h3>
-                  </div>
-                  <div className="space-y-1 mt-2 text-xs text-gray-600">
-                    <p>
-                      <span className="font-medium text-gray-700">Available Rooms:</span>{' '}
-                      <span className="text-blue-600 font-semibold">{hotel.availableRooms}</span>
-                      <span className="text-gray-400"> / {hotel.totalRooms}</span>
-                    </p>
-                    <p>
-                      <span className="font-medium text-gray-700">Type:</span> {hotel.type}
-                    </p>
-                    <p>
-                      <span className="font-medium text-gray-700">District:</span> {hotel.district}
-                    </p>
-                    <div className="flex items-center gap-1">
-                      <span className="font-medium text-gray-700">Rating:</span>
-                      <Stars rating={hotel.rating} />
-                    </div>
-                    <p>
-                      <span className="font-medium text-gray-700">Price:</span>{' '}
-                      <span className="text-amber-600 font-semibold">{hotel.priceRange}</span>
-                    </p>
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
+          hotelData.map((hotel) => {
+            const isSelected = selectedHotelId === hotel.id;
+            const isDimmed = exploreMode && !isSelected;
 
-        {/* Attractions */}
+            if (exploreMode && !isSelected && filter === 'hotels') {
+              return null;
+            }
+
+            const nearbyForHotel = getWithinRadiusKm(
+              hotel,
+              attractionData,
+              nearbyRadiusKm
+            );
+
+            return (
+              <Marker
+                key={`hotel-${hotel.id}`}
+                position={[hotel.lat, hotel.lng]}
+                icon={
+                  isSelected
+                    ? icons.hotelSelected
+                    : isDimmed
+                      ? icons.hotelDimmed
+                      : icons.hotel
+                }
+                zIndexOffset={isSelected ? 1000 : 0}
+                eventHandlers={{
+                  click: () => handleHotelClick(hotel),
+                }}
+              >
+                <Popup>
+                  <HotelPopupContent
+                    hotel={hotel}
+                    nearby={nearbyForHotel}
+                    radiusKm={nearbyRadiusKm}
+                    canExplore={enableHotelExplore && !!onHotelSelect}
+                    onExplore={() => onHotelSelect?.(hotel)}
+                  />
+                </Popup>
+              </Marker>
+            );
+          })}
+
         {showAttractions &&
-          attractionData.map((attr) => (
+          attractionData.map((attr) => {
+            const isNearby = exploreMode && nearbyIds.has(attr.id);
+            const isHidden =
+              exploreMode && !isNearby && filter !== 'attractions';
+
+            if (isHidden) return null;
+
+            return (
+              <Marker
+                key={`attr-${attr.id}`}
+                position={[attr.lat, attr.lng]}
+                icon={isNearby ? icons.attractionNearby : icons.attraction}
+                zIndexOffset={isNearby ? 500 : 0}
+              >
+                <Popup>
+                  <div className="min-w-[210px] max-w-[260px] font-cosmica">
+                    <div className="mb-2 flex items-start gap-2">
+                      <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+                      <div>
+                        <h3 className="text-sm font-semibold leading-tight text-obsidian">
+                          {attr.name}
+                        </h3>
+                        <p className="mt-0.5 text-xs text-steel">{attr.district}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2 border-t border-fog pt-2 text-xs">
+                      <PopupBadge tone="attraction">{attr.category}</PopupBadge>
+                      {selectedHotel && (
+                        <p className="font-medium text-obsidian">
+                          {formatDistanceKm(
+                            distanceKm(
+                              selectedHotel.lat,
+                              selectedHotel.lng,
+                              attr.lat,
+                              attr.lng
+                            )
+                          )}{' '}
+                          <span className="font-normal text-steel">
+                            from {selectedHotel.name}
+                          </span>
+                        </p>
+                      )}
+                      <p className="leading-relaxed text-steel">{attr.description}</p>
+                    </div>
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
+
+        {showTourists &&
+          tourists.map((t) => (
             <Marker
-              key={`attr-${attr.id}`}
-              position={[attr.lat, attr.lng]}
-              icon={icons.attraction}
+              key={`tourist-${t.id}`}
+              position={[t.lat, t.lng]}
+              icon={icons.tourist}
+              zIndexOffset={800}
             >
               <Popup>
-                <div className="min-w-[200px] max-w-[260px] font-sans">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="inline-block w-2.5 h-2.5 rounded-full bg-green-500 shrink-0" />
-                    <h3 className="text-sm font-bold text-gray-900 leading-tight">
-                      {attr.name}
-                    </h3>
+                <div className="min-w-[200px] font-cosmica">
+                  <div className="mb-2 flex items-start gap-2">
+                    <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-pink-500" />
+                    <div>
+                      <h3 className="text-sm font-semibold leading-tight text-obsidian">
+                        {t.name}
+                      </h3>
+                      <p className="mt-0.5 text-xs text-steel">StayNEP traveler</p>
+                    </div>
                   </div>
-                  <div className="space-y-1 mt-2 text-xs text-gray-600">
+                  <div className="space-y-1 border-t border-fog pt-2 text-xs text-steel">
+                    {t.label && (
+                      <p>
+                        <span className="font-medium text-graphite">Near </span>
+                        {t.label}
+                      </p>
+                    )}
                     <p>
-                      <span className="inline-block px-1.5 py-0.5 rounded bg-green-100 text-green-700 font-medium capitalize text-[10px]">
-                        {attr.category}
-                      </span>
-                    </p>
-                    <p className="leading-relaxed">{attr.description}</p>
-                    <p>
-                      <span className="font-medium text-gray-700">District:</span> {attr.district}
+                      Last seen{" "}
+                      {new Date(t.updatedAt).toLocaleString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
                     </p>
                   </div>
                 </div>
@@ -185,67 +483,66 @@ export default function LeafletMap({
             </Marker>
           ))}
 
-        {/* Emergency Services */}
-        {filteredEmergency.map((svc) => {
-          const icon =
-            svc.type === 'hospital'
-              ? icons.hospital
-              : svc.type === 'police'
-                ? icons.police
-                : icons.shelter;
+        {showEmergency &&
+          !exploreMode &&
+          filteredEmergency.map((svc) => {
+            const icon =
+              svc.type === 'hospital'
+                ? icons.hospital
+                : svc.type === 'police'
+                  ? icons.police
+                  : icons.shelter;
 
-          const dotColor =
-            svc.type === 'hospital'
-              ? 'bg-red-500'
-              : svc.type === 'police'
-                ? 'bg-orange-500'
-                : 'bg-purple-500';
+            const tone =
+              svc.type === 'hospital'
+                ? 'hospital'
+                : svc.type === 'police'
+                  ? 'police'
+                  : 'shelter';
 
-          const badgeBg =
-            svc.type === 'hospital'
-              ? 'bg-red-100 text-red-700'
-              : svc.type === 'police'
-                ? 'bg-orange-100 text-orange-700'
-                : 'bg-purple-100 text-purple-700';
+            const dotColor =
+              svc.type === 'hospital'
+                ? 'bg-red-500'
+                : svc.type === 'police'
+                  ? 'bg-orange-500'
+                  : 'bg-violet-500';
 
-          return (
-            <Marker
-              key={`emer-${svc.id}`}
-              position={[svc.lat, svc.lng]}
-              icon={icon}
-            >
-              <Popup>
-                <div className="min-w-[200px] font-sans">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className={`inline-block w-2.5 h-2.5 rounded-full ${dotColor} shrink-0`} />
-                    <h3 className="text-sm font-bold text-gray-900 leading-tight">
-                      {svc.name}
-                    </h3>
+            return (
+              <Marker
+                key={`emer-${svc.id}`}
+                position={[svc.lat, svc.lng]}
+                icon={icon}
+              >
+                <Popup>
+                  <div className="min-w-[210px] font-cosmica">
+                    <div className="mb-2 flex items-start gap-2">
+                      <span
+                        className={`mt-1 h-2 w-2 shrink-0 rounded-full ${dotColor}`}
+                      />
+                      <div>
+                        <h3 className="text-sm font-semibold leading-tight text-obsidian">
+                          {svc.name}
+                        </h3>
+                        <p className="mt-0.5 text-xs text-steel">{svc.district}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2 border-t border-fog pt-2 text-xs">
+                      <PopupBadge tone={tone}>{svc.type}</PopupBadge>
+                      <p className="text-steel">
+                        <span className="font-medium text-graphite">Contact </span>
+                        <a
+                          href={`tel:${svc.contact}`}
+                          className="font-medium text-obsidian hover:underline"
+                        >
+                          {svc.contact}
+                        </a>
+                      </p>
+                    </div>
                   </div>
-                  <div className="space-y-1 mt-2 text-xs text-gray-600">
-                    <p>
-                      <span className={`inline-block px-1.5 py-0.5 rounded font-medium capitalize text-[10px] ${badgeBg}`}>
-                        {svc.type}
-                      </span>
-                    </p>
-                    <p>
-                      <span className="font-medium text-gray-700">Contact:</span>{' '}
-                      <a
-                        href={`tel:${svc.contact}`}
-                        className="text-blue-600 hover:underline font-medium"
-                      >
-                        {svc.contact}
-                      </a>
-                    </p>
-                    <p>
-                      <span className="font-medium text-gray-700">District:</span> {svc.district}
-                    </p>
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
-          );
-        })}
+                </Popup>
+              </Marker>
+            );
+          })}
       </MapContainer>
     </div>
   );

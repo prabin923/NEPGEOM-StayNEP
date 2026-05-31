@@ -12,6 +12,8 @@ export const upcomingTrips = [
     dates: "Jun 12 – Jun 18, 2026",
     hotel: "Fishtail Lodge",
     status: "confirmed" as const,
+    lat: 28.2096,
+    lng: 83.9856,
   },
   {
     id: 2,
@@ -19,7 +21,16 @@ export const upcomingTrips = [
     dates: "Jul 3 – Jul 7, 2026",
     hotel: "Jungle Villa Resort",
     status: "pending" as const,
+    lat: 27.5291,
+    lng: 84.3542,
   },
+];
+
+/** Default hubs for weather when no trip is selected */
+export const travelerWeatherHubs = [
+  { id: "kathmandu", label: "Kathmandu", lat: 27.7172, lng: 85.324 },
+  { id: "pokhara", label: "Pokhara", lat: 28.2096, lng: 83.9856 },
+  { id: "chitwan", label: "Chitwan", lat: 27.5291, lng: 84.3542 },
 ];
 
 export const savedPlaces = [

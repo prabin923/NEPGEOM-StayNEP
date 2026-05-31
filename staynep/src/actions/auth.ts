@@ -62,6 +62,16 @@ export async function registerUser(
       passwordHash,
       role: portalRoleToPrisma(role),
       organization: organization || null,
+      ...(role === "hotel" && organization
+        ? {
+            property: {
+              create: {
+                name: organization,
+                district: "Nepal",
+              },
+            },
+          }
+        : {}),
     },
   });
 

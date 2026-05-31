@@ -1,30 +1,22 @@
-import PortalShell from "@/components/portal/PortalShell";
-import HotelDashboard from "@/components/dashboards/HotelDashboard";
-import { roleMeta } from "@/lib/auth-helpers";
-import { requireRole } from "@/lib/require-role";
-import { prisma } from "@/lib/prisma";
+import HotelBusinessDashboard from "@/components/hotel/HotelBusinessDashboard";
+import HotelFrontDesk from "@/components/hotel/HotelFrontDesk";
+import { loadHotelPageData } from "@/lib/hotel-page";
 
 export const metadata = {
-  title: "Hotel Partner — StayNEP",
-  description: "Hotel inventory, bookings, and analytics",
+  title: "Business Dashboard — StayNEP",
 };
 
-export default async function HotelPortalPage() {
-  const session = await requireRole("HOTEL");
-  const user = session.user;
-
-  const dbUser = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: { organization: true, name: true },
-  });
+export default async function HotelDashboardPage() {
+  const data = await loadHotelPageData();
 
   return (
-    <PortalShell
-      role="hotel"
-      userLabel={dbUser?.organization ?? user.name ?? "Hotel Partner"}
-      userMeta={roleMeta("HOTEL")}
-    >
-      <HotelDashboard />
-    </PortalShell>
+    <div className="space-y-10">
+      <HotelFrontDesk bookings={data.bookings} propertyName={data.propertyName} />
+      <HotelBusinessDashboard
+        userName={data.user.organization ?? data.user.name ?? "Admin"}
+        business={data.business}
+        revenueTrend={data.revenueTrend}
+      />
+    </div>
   );
 }

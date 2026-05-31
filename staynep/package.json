@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "eslint",
     "db:push": "prisma db push",
+    "db:seed": "prisma db push && node prisma/seed.mjs",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate"
   },
@@ -38,5 +39,8 @@
     "prisma": "^6.9.0",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.mjs"
   }
 }
