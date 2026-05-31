@@ -1,0 +1,194 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-navy: #0D1B3E;
+  --color-navy-dark: #060e24;
+  --color-navy-light: #152550;
+  --color-gold: #C9A24A;
+  --color-gold-light: #d4b76b;
+  --color-gold-dark: #a8862f;
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+:root {
+  --background: #0D1B3E;
+  --foreground: #ffffff;
+}
+
+* {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #0D1B3E;
+  color: #ffffff;
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Glassmorphism utility */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #060e24;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(201, 162, 74, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 162, 74, 0.5);
+}
+
+/* Floating animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.4;
+    box-shadow: 0 0 20px rgba(201, 162, 74, 0.2);
+  }
+  50% {
+    opacity: 0.8;
+    box-shadow: 0 0 40px rgba(201, 162, 74, 0.4);
+  }
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow 8s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+/* Fade in animation */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+
+/* Dot grid pattern */
+.dot-pattern {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+
+/* Map container fixes */
+.leaflet-container {
+  background: #0a1428 !important;
+  border-radius: 12px;
+}
+
+.leaflet-popup-content-wrapper {
+  background: rgba(13, 27, 62, 0.95) !important;
+  backdrop-filter: blur(12px) !important;
+  color: #fff !important;
+  border: 1px solid rgba(201, 162, 74, 0.3) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
+}
+
+.leaflet-popup-content {
+  color: #fff !important;
+  margin: 12px 16px !important;
+}
+
+.leaflet-popup-tip {
+  background: rgba(13, 27, 62, 0.95) !important;
+  border: 1px solid rgba(201, 162, 74, 0.3) !important;
+}
+
+.leaflet-popup-close-button {
+  color: #C9A24A !important;
+}
+
+/* Recharts custom styling */
+.recharts-default-tooltip {
+  background: rgba(13, 27, 62, 0.95) !important;
+  border: 1px solid rgba(201, 162, 74, 0.3) !important;
+  border-radius: 8px !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+.recharts-tooltip-label {
+  color: #C9A24A !important;
+}
+
+.recharts-tooltip-item {
+  color: #fff !important;
+}
+
+/* Selection color */
+::selection {
+  background: rgba(201, 162, 74, 0.3);
+  color: #fff;
+}
