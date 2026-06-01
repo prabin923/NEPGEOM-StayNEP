@@ -1,0 +1,7 @@
+{
+  "name": "hackfest",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix staynep run build"
+  }
+}

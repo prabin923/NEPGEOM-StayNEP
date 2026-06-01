@@ -2,6 +2,7 @@ import { execSync } from "node:child_process";
 import { copyFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { syncNextToRepoRoot } from "./sync-next-to-repo-root.mjs";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const schemaPath = path.join(projectRoot, "prisma", "schema.prisma");
@@ -50,3 +51,5 @@ if (!existsSync(routesDeterministic)) {
   copyFileSync(routesManifest, routesDeterministic);
   console.log("→ created routes-manifest-deterministic.json");
 }
+
+syncNextToRepoRoot(projectRoot);
