@@ -27,8 +27,41 @@ const STATIC_PRICE_MAP: Record<string, { min: number; max: number }> = {
 
 const STATIC_AMENITIES = ["WiFi", "AC", "Hot Water", "Room Service"];
 
+function staticCatalogHotels(): SearchableHotel[] {
+  return staticHotels.map((sh) => {
+    const priceRange = STATIC_PRICE_MAP[sh.priceRange] ?? { min: 1500, max: 3000 };
+    return {
+      id: `static-${sh.id}`,
+      name: sh.name,
+      district: sh.district,
+      latitude: sh.lat,
+      longitude: sh.lng,
+      amenities: STATIC_AMENITIES,
+      minPrice: priceRange.min,
+      maxPrice: priceRange.max,
+      totalRooms: sh.totalRooms,
+      avgRating: sh.rating,
+      reviewCount: Math.floor(sh.rating * 5) + 3,
+      isPartner: false,
+      roomTypes: [sh.type],
+    };
+  });
+}
+
 export async function fetchSearchableHotels(): Promise<SearchableHotel[]> {
-  // 1. Fetch DB Properties
+  if (!process.env.DATABASE_URL) {
+    return staticCatalogHotels();
+  }
+
+  try {
+    return await loadSearchableHotels();
+  } catch (e) {
+    console.error("[fetchSearchableHotels]", e);
+    return staticCatalogHotels();
+  }
+}
+
+async function loadSearchableHotels(): Promise<SearchableHotel[]> {
   const dbProperties = await prisma.property.findMany({
     include: {
       rooms: true,
@@ -80,26 +113,9 @@ export async function fetchSearchableHotels(): Promise<SearchableHotel[]> {
   // 2. Filter static catalog hotels that are not already present in the DB by name match
   const dbNames = new Set(dbHotels.map((h) => h.name.toLowerCase()));
   
-  const mergedStaticHotels: SearchableHotel[] = staticHotels
-    .filter((sh) => !dbNames.has(sh.name.toLowerCase()))
-    .map((sh) => {
-      const priceRange = STATIC_PRICE_MAP[sh.priceRange] ?? { min: 1500, max: 3000 };
-      return {
-        id: `static-${sh.id}`,
-        name: sh.name,
-        district: sh.district,
-        latitude: sh.lat,
-        longitude: sh.lng,
-        amenities: STATIC_AMENITIES,
-        minPrice: priceRange.min,
-        maxPrice: priceRange.max,
-        totalRooms: sh.totalRooms,
-        avgRating: sh.rating,
-        reviewCount: Math.floor(sh.rating * 5) + 3, // simulated review count
-        isPartner: false,
-        roomTypes: [sh.type],
-      };
-    });
+  const mergedStaticHotels = staticCatalogHotels().filter(
+    (sh) => !dbNames.has(sh.name.toLowerCase())
+  );
 
   return [...dbHotels, ...mergedStaticHotels];
 }

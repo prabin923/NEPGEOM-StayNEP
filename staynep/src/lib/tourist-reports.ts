@@ -145,6 +145,15 @@ export async function fetchTransparencySnapshot(): Promise<TransparencySnapshot>
     return emptyTransparencySnapshot();
   }
 
+  try {
+    return await loadTransparencySnapshot();
+  } catch (e) {
+    console.error("[fetchTransparencySnapshot]", e);
+    return emptyTransparencySnapshot();
+  }
+}
+
+async function loadTransparencySnapshot(): Promise<TransparencySnapshot> {
   const [openCount, resolvedCount, allResolved, openByCategory, openReports] =
     await Promise.all([
       prisma.touristReport.count({
