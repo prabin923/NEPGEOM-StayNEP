@@ -2,6 +2,9 @@
   "name": "staynep",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "prebuild": "node scripts/reset-build.mjs",
@@ -25,7 +28,8 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-map-gl": "^8.1.1",
-    "recharts": "^3.8.1"
+    "recharts": "^3.8.1",
+    "prisma": "^6.9.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -35,7 +39,6 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
-    "prisma": "^6.9.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   },

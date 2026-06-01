@@ -3,6 +3,8 @@ import { fetchTransparencySnapshot } from "@/lib/tourist-reports";
 import { REPORT_CATEGORY_LABELS } from "@/lib/tourist-reports";
 import type { ReportCategory } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Tourism Transparency — StayNEP",
   description: "Public summary of tourist issues reported through StayNEP",

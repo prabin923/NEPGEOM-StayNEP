@@ -2,6 +2,8 @@ import { auth } from "@/lib/auth";
 import { fetchSearchableHotels } from "@/lib/search-hotels";
 import HotelSearchPage from "@/components/search/HotelSearchPage";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Browse Hotels — StayNEP",
   description: "Find verified hotels, heritage homestays, and boutique resorts across Nepal using GIS location intelligence.",

@@ -130,7 +130,21 @@ export interface TransparencySnapshot {
   avgResolutionHours: number | null;
 }
 
+function emptyTransparencySnapshot(): TransparencySnapshot {
+  return {
+    openCount: 0,
+    resolvedCount: 0,
+    byCategory: [],
+    byDistrict: [],
+    avgResolutionHours: null,
+  };
+}
+
 export async function fetchTransparencySnapshot(): Promise<TransparencySnapshot> {
+  if (!process.env.DATABASE_URL) {
+    return emptyTransparencySnapshot();
+  }
+
   const [openCount, resolvedCount, allResolved, openByCategory, openReports] =
     await Promise.all([
       prisma.touristReport.count({
@@ -200,4 +214,3 @@ export function inferDistrictFromCoords(
   }
   return "Nepal";
 }
-
