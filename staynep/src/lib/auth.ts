@@ -85,8 +85,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const role = parseSignupRoleCookie(
         cookieStore.get("staynep_signup_role")?.value
       );
-      const organization =
-        cookieStore.get("staynep_signup_org")?.value?.trim() || undefined;
+      const orgRaw = cookieStore.get("staynep_signup_org")?.value;
+      const organization = orgRaw
+        ? decodeURIComponent(orgRaw).trim() || undefined
+        : undefined;
 
       if (role === "hotel" && !organization) {
         return "/signup?error=hotel_name_required";
@@ -104,8 +106,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         { role, organization }
       );
 
-      cookieStore.delete("staynep_signup_role");
-      cookieStore.delete("staynep_signup_org");
+      cookieStore.set("staynep_signup_role", "", { maxAge: 0, path: "/" });
+      cookieStore.set("staynep_signup_org", "", { maxAge: 0, path: "/" });
 
       return true;
     },

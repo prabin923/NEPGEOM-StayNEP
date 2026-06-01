@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import SignupForm from "@/components/auth/SignupForm";
 
 export const metadata = {
@@ -19,7 +20,13 @@ export default function SignupPage() {
         </p>
       </div>
       <div className="px-6 py-8 sm:px-10 sm:py-10">
-        <SignupForm />
+        <Suspense
+          fallback={
+            <p className="text-sm text-steel font-cosmica">Loading…</p>
+          }
+        >
+          <SignupForm />
+        </Suspense>
       </div>
     </div>
   );
