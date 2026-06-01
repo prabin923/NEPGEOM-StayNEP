@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useState } from "react";
-import { registerUser, type AuthFormState } from "@/actions/auth";
+import { useState, type FormEvent } from "react";
 import RoleSelector from "@/components/auth/RoleSelector";
 import {
   AuthField,
@@ -11,60 +10,50 @@ import {
   AuthSubmitButton,
 } from "@/components/auth/AuthField";
 import type { PortalRole } from "@/lib/roles";
-import AuthDivider from "@/components/auth/AuthDivider";
-import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
-import { useSearchParams } from "next/navigation";
-
-const initialState: AuthFormState = {};
+import type { AuthResult } from "@/lib/credentials-auth";
 
 export default function SignupForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [role, setRole] = useState<PortalRole>("traveler");
   const [organization, setOrganization] = useState("");
-  const [state, formAction, pending] = useActionState(registerUser, initialState);
-
-  const oauthError = searchParams.get("error");
-  const oauthErrorMessage =
-    oauthError === "hotel_name_required"
-      ? "Enter your hotel name below, then use Sign up with Google."
-      : oauthError === "org_name_required"
-        ? "Enter your organization name below, then use Sign up with Google."
-        : null;
-
-  useEffect(() => {
-    if (!state.success) return;
-    router.push(state.redirectTo ?? "/dashboard");
-    router.refresh();
-  }, [state.success, state.redirectTo, router]);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
 
   const showOrganization = role === "hotel" || role === "authorities";
 
-  const googleDisabled =
-    (role === "hotel" || role === "authorities") && !organization.trim();
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPending(true);
+    setError(null);
+
+    const formData = new FormData(event.currentTarget);
+    formData.set("role", role);
+
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        body: formData,
+      });
+      const result = (await response.json()) as AuthResult;
+
+      if (result.error || !response.ok) {
+        setError(result.error ?? "Could not create account. Please try again.");
+        setPending(false);
+        return;
+      }
+
+      router.push(result.redirectTo ?? "/dashboard");
+      router.refresh();
+    } catch {
+      setError("Could not create account. Please try again.");
+      setPending(false);
+    }
+  }
 
   return (
-    <div className="space-y-8">
-      {(state.error || oauthErrorMessage) && (
-        <AuthError message={state.error ?? oauthErrorMessage ?? ""} />
-      )}
+    <form onSubmit={handleSubmit} className="space-y-8">
+      {error && <AuthError message={error} />}
 
-      <GoogleSignInButton
-        mode="signup"
-        signupRole={role}
-        signupOrganization={organization}
-        disabled={googleDisabled}
-      />
-      {googleDisabled && (
-        <p className="text-center text-xs text-steel font-cosmica">
-          Enter your {role === "hotel" ? "hotel" : "organization"} name first to
-          sign up with Google.
-        </p>
-      )}
-
-      <AuthDivider />
-
-    <form action={formAction} className="space-y-8">
       <section aria-labelledby="role-heading">
         <h2 id="role-heading" className="sr-only">
           Choose your role
@@ -171,6 +160,5 @@ export default function SignupForm() {
         </Link>
       </p>
     </form>
-    </div>
   );
 }

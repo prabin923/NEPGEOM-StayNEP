@@ -1,13 +1,11 @@
-"use server";
-
 import bcrypt from "bcryptjs";
+import { AuthError } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { dashboardPathForRole, portalRoleToPrisma } from "@/lib/auth-helpers";
 import { signIn } from "@/lib/auth";
 import type { PortalRole } from "@/lib/roles";
-import { AuthError } from "next-auth";
 
-export type AuthFormState = {
+export type AuthResult = {
   error?: string;
   success?: boolean;
   redirectTo?: string;
@@ -34,10 +32,9 @@ function friendlyAuthErrorMessage(error: unknown): string {
   return "We couldn't complete that request right now. Please try again.";
 }
 
-export async function registerUser(
-  _prev: AuthFormState,
+export async function registerWithCredentials(
   formData: FormData
-): Promise<AuthFormState> {
+): Promise<AuthResult> {
   try {
     if (!process.env.DATABASE_URL) {
       return {
@@ -129,10 +126,9 @@ export async function registerUser(
   }
 }
 
-export async function loginUser(
-  _prev: AuthFormState,
+export async function loginWithCredentials(
   formData: FormData
-): Promise<AuthFormState> {
+): Promise<AuthResult> {
   try {
     if (!process.env.DATABASE_URL) {
       return {
@@ -151,14 +147,8 @@ export async function loginUser(
     }
 
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
+    if (!user?.passwordHash) {
       return { error: "Invalid email or password." };
-    }
-    if (!user.passwordHash) {
-      return {
-        error:
-          "This account uses Google sign-in. Please click Continue with Google below.",
-      };
     }
 
     try {

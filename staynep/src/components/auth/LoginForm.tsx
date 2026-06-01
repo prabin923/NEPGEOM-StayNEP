@@ -2,45 +2,56 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useActionState, useEffect } from "react";
-import { loginUser, type AuthFormState } from "@/actions/auth";
+import { useState, type FormEvent } from "react";
 import {
   AuthField,
   AuthError,
   AuthSubmitButton,
 } from "@/components/auth/AuthField";
-import AuthDivider from "@/components/auth/AuthDivider";
-import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
-
-const initialState: AuthFormState = {};
+import type { AuthResult } from "@/lib/credentials-auth";
 
 export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl");
-  const [state, formAction, pending] = useActionState(loginUser, initialState);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
 
-  useEffect(() => {
-    if (!state.success) return;
-    const target =
-      callbackUrl?.startsWith("/dashboard")
-        ? callbackUrl
-        : state.redirectTo ?? "/dashboard";
-    router.push(target);
-    router.refresh();
-  }, [state.success, state.redirectTo, callbackUrl, router]);
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPending(true);
+    setError(null);
 
-  const oauthCallback =
-    callbackUrl?.startsWith("/") ? callbackUrl : "/dashboard";
+    const formData = new FormData(event.currentTarget);
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        body: formData,
+      });
+      const result = (await response.json()) as AuthResult;
+
+      if (result.error || !response.ok) {
+        setError(result.error ?? "Invalid email or password.");
+        setPending(false);
+        return;
+      }
+
+      const target =
+        callbackUrl?.startsWith("/dashboard")
+          ? callbackUrl
+          : result.redirectTo ?? "/dashboard";
+      router.push(target);
+      router.refresh();
+    } catch {
+      setError("Could not sign in. Please try again.");
+      setPending(false);
+    }
+  }
 
   return (
-    <div className="space-y-5">
-      <GoogleSignInButton mode="login" callbackUrl={oauthCallback} />
-
-      <AuthDivider />
-
-      <form action={formAction} className="space-y-5">
-      {state.error && <AuthError message={state.error} />}
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {error && <AuthError message={error} />}
 
       <AuthField
         label="Email"
@@ -71,6 +82,5 @@ export default function LoginForm() {
         </Link>
       </p>
     </form>
-    </div>
   );
 }
