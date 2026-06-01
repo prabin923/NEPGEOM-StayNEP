@@ -29,8 +29,8 @@ if (!env.DATABASE_URL) {
 console.log("→ prisma generate");
 execSync("npx prisma generate", { stdio: "inherit", cwd: projectRoot, env });
 
-console.log("→ next build --webpack");
-execSync("npx next build --webpack", { stdio: "inherit", cwd: projectRoot, env });
+console.log("→ next build");
+execSync("npx next build", { stdio: "inherit", cwd: projectRoot, env });
 
 const nextDir = path.join(projectRoot, ".next");
 const routesManifest = path.join(nextDir, "routes-manifest.json");
