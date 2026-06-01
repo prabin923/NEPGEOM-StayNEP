@@ -4,6 +4,7 @@ import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import type { Role } from "@prisma/client";
 import { cookies } from "next/headers";
+import authConfig from "@/auth.config";
 import { prisma } from "@/lib/prisma";
 import {
   findUserByEmail,
@@ -17,11 +18,7 @@ const googleClientSecret =
   process.env.AUTH_GOOGLE_SECRET ?? process.env.GOOGLE_CLIENT_SECRET;
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  trustHost: true,
-  session: { strategy: "jwt" },
-  pages: {
-    signIn: "/login",
-  },
+  ...authConfig,
   providers: [
     ...(googleClientId && googleClientSecret
       ? [
@@ -71,6 +68,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
+    ...authConfig.callbacks,
     async signIn({ user, account }) {
       if (account?.provider !== "google") {
         return true;
@@ -129,13 +127,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
 
       return token;
-    },
-    session({ session, token }) {
-      if (session.user && token.id && token.role) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as Role;
-      }
-      return session;
     },
   },
 });
