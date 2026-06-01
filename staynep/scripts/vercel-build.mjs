@@ -26,6 +26,15 @@ if (!env.DATABASE_URL) {
   );
 }
 
+if (env.VERCEL && !env.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY) {
+  console.warn(
+    "⚠ NEXT_SERVER_ACTIONS_ENCRYPTION_KEY is not set.\n" +
+      "  Server Actions (signup/login) may fail after deploys.\n" +
+      "  Add it in Vercel → Settings → Environment Variables (Production + Preview),\n" +
+      "  then redeploy. Generate: openssl rand -base64 32"
+  );
+}
+
 console.log("→ prisma generate");
 execSync("npx prisma generate", { stdio: "inherit", cwd: projectRoot, env });
 
@@ -52,4 +61,6 @@ if (!existsSync(routesDeterministic)) {
   console.log("→ created routes-manifest-deterministic.json");
 }
 
-syncNextToRepoRoot(projectRoot);
+if (!env.VERCEL) {
+  syncNextToRepoRoot(projectRoot);
+}

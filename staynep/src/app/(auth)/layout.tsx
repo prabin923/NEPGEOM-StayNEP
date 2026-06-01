@@ -1,6 +1,9 @@
 import Link from "next/link";
 import Logo from "@/components/Logo";
 
+/** Avoid static HTML caching stale Server Action IDs after deploys. */
+export const dynamic = "force-dynamic";
+
 export default function AuthLayout({
   children,
 }: {

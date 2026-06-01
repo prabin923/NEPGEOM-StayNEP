@@ -6,6 +6,13 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["lucide-react", "recharts"],
   },
+  generateBuildId: async () => {
+    return (
+      process.env.VERCEL_GIT_COMMIT_SHA ??
+      process.env.GITHUB_SHA ??
+      `local-${Date.now()}`
+    );
+  },
 };
 
 export default nextConfig;
