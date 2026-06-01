@@ -115,9 +115,11 @@ export default function HomeMotion() {
           },
           y: 48,
           opacity: 0,
-          scale: 0.98,
           duration: 0.9,
           ease: "power2.out",
+          onComplete: () => {
+            window.dispatchEvent(new Event("staynep-map-invalidate"));
+          },
         });
       }
 

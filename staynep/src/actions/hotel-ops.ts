@@ -427,6 +427,7 @@ export async function updateProperty(
   const phone = String(formData.get("phone") ?? "").trim();
   const latRaw = String(formData.get("latitude") ?? "").trim();
   const lngRaw = String(formData.get("longitude") ?? "").trim();
+  const amenitiesRaw = String(formData.get("amenities") ?? "").trim();
 
   if (!name) return { error: "Property name is required." };
   if (!district) return { error: "District is required." };
@@ -444,6 +445,15 @@ export async function updateProperty(
     }
   }
 
+  let amenities: string[] = [];
+  if (amenitiesRaw) {
+    try {
+      amenities = JSON.parse(amenitiesRaw);
+    } catch {
+      amenities = amenitiesRaw.split(",").map((s) => s.trim()).filter(Boolean);
+    }
+  }
+
   await prisma.property.update({
     where: { id: ctx.property.id },
     data: {
@@ -453,6 +463,7 @@ export async function updateProperty(
       phone: phone || null,
       latitude,
       longitude,
+      amenities,
     },
   });
   revalidateHotelDashboard();

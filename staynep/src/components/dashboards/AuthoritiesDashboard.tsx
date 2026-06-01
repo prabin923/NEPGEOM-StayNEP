@@ -38,6 +38,8 @@ import AuthoritiesMapLegend from "@/components/authorities/AuthoritiesMapLegend"
 import type { TouristMapMarker } from "@/lib/traveler-locations";
 import type { RegisteredHotelMarker } from "@/lib/registered-hotels";
 import type { ReportMapMarker } from "@/lib/report-map-markers";
+import type { TrafficCorridor } from "@/lib/map-traffic";
+import type { CatalogMapHotel, MapHotelReview } from "@/lib/map-hotels";
 import type {
   AuthorityLiveStats,
   TouristReportWithReporter,
@@ -48,6 +50,9 @@ interface AuthoritiesDashboardProps {
   tourists?: TouristMapMarker[];
   registeredHotels?: RegisteredHotelMarker[];
   reportMarkers?: ReportMapMarker[];
+  trafficCorridors?: TrafficCorridor[];
+  catalogHotels?: CatalogMapHotel[];
+  recentReviews?: MapHotelReview[];
   reports?: TouristReportWithReporter[];
   transparency?: TransparencySnapshot;
   liveStats?: AuthorityLiveStats;
@@ -57,6 +62,9 @@ export default function AuthoritiesDashboard({
   tourists = [],
   registeredHotels = [],
   reportMarkers = [],
+  trafficCorridors = [],
+  catalogHotels,
+  recentReviews = [],
   reports = [],
   transparency,
   liveStats,
@@ -99,7 +107,7 @@ export default function AuthoritiesDashboard({
         <PortalCard variant="snow" className="xl:col-span-2 !p-5">
           <PortalSectionTitle
             title="National operations map"
-            subtitle="Real-time layers — travelers, partner hotels, open incidents"
+            subtitle="Hotels, ratings, traffic corridors, travelers & open incidents"
             icon={Globe}
           />
           <AuthoritiesMapLegend />
@@ -108,6 +116,9 @@ export default function AuthoritiesDashboard({
               initialTourists={tourists}
               initialHotels={registeredHotels}
               initialReports={reportMarkers}
+              initialTraffic={trafficCorridors}
+              initialCatalogHotels={catalogHotels}
+              initialRecentReviews={recentReviews}
               defaultFilter="all"
               variant="ministry"
               showTouristCount

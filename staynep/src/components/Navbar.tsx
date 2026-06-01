@@ -6,6 +6,7 @@ import { Menu, X } from 'lucide-react';
 import { LogoImage } from '@/components/Logo';
 
 const navLinks = [
+  { label: 'Hotels', href: '/hotels' },
   { label: 'Features', href: 'features' },
   { label: 'Map', href: 'map' },
   { label: 'Dashboard', href: 'dashboard' },

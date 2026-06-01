@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowRight, Compass } from 'lucide-react';
+import NumberCounter, { type CounterStat } from '@/components/NumberCounter';
 
 /* ------------------------------------------------------------------ */
 /*  Map preview card – simulated map with clean light theme layout     */
@@ -102,34 +103,24 @@ function MapPreview() {
 /* ------------------------------------------------------------------ */
 /*  Stats bar                                                          */
 /* ------------------------------------------------------------------ */
-const stats = [
-  { value: '1,200+', label: 'Hotels' },
-  { value: '150+', label: 'Destinations' },
-  { value: '7', label: 'Provinces' },
-  { value: '24/7', label: 'Safety Network' },
+const heroStats: CounterStat[] = [
+  { value: 1200, suffix: '+', label: 'Hotels' },
+  { value: 150, suffix: '+', label: 'Destinations' },
+  { value: 7, label: 'Provinces' },
+  { display: '24/7', label: 'Safety Network' },
 ];
 
 function StatsBar() {
   return (
     <div className="relative z-20 mx-auto mt-16 max-w-4xl px-4 lg:mt-20">
-      <div className="rounded-[36px] border border-fog bg-snow p-6">
-        <div className="grid grid-cols-2 gap-6 sm:grid-cols-4 sm:gap-4">
-          {stats.map((s, i) => (
-            <div
-              key={i}
-              data-gsap="hero-stat"
-              className="flex flex-col items-center text-center"
-            >
-              <span className="text-[40px] font-bold leading-none tracking-tight text-obsidian font-cosmica">
-                {s.value}
-              </span>
-              <span className="mt-1 text-[13px] font-medium tracking-tight text-steel">
-                {s.label}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
+      <NumberCounter
+        stats={heroStats}
+        className="grid grid-cols-2 gap-6 rounded-full border border-fog bg-snow px-6 py-8 shadow-sm sm:grid-cols-4 sm:gap-4 sm:px-10 sm:py-9"
+        itemClassName="flex flex-col items-center text-center"
+        valueClassName="text-[40px] font-bold leading-none tracking-tight text-obsidian font-cosmica tabular-nums"
+        labelClassName="mt-1 text-[13px] font-medium tracking-tight text-steel"
+        itemDataAttrs={{ gsap: 'hero-stat' }}
+      />
     </div>
   );
 }

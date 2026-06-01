@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
+/** Models that must exist after `prisma generate` (schema additions). */
 const REQUIRED_DELEGATES = [
   "user",
   "property",
@@ -18,13 +19,25 @@ function createPrismaClient() {
   });
 }
 
-function isPrismaClientReady(client: PrismaClient) {
-  return REQUIRED_DELEGATES.every((model) => {
+function missingDelegates(client: PrismaClient): string[] {
+  return REQUIRED_DELEGATES.filter((model) => {
     const delegate = client[model as keyof PrismaClient] as {
       findMany?: unknown;
     };
-    return typeof delegate?.findMany === "function";
+    return typeof delegate?.findMany !== "function";
   });
+}
+
+function isPrismaClientReady(client: PrismaClient) {
+  return missingDelegates(client).length === 0;
+}
+
+function staleError(client: PrismaClient) {
+  const missing = missingDelegates(client);
+  if (missing.length === 0) return new Error(STALE_PRISMA_MESSAGE);
+  return new Error(
+    `${STALE_PRISMA_MESSAGE} Missing delegates: ${missing.join(", ")}.`
+  );
 }
 
 function getPrismaClient(): PrismaClient {
@@ -40,7 +53,7 @@ function getPrismaClient(): PrismaClient {
 
   const client = createPrismaClient();
   if (!isPrismaClientReady(client)) {
-    throw new Error(STALE_PRISMA_MESSAGE);
+    throw staleError(client);
   }
 
   globalForPrisma.prisma = client;
@@ -62,7 +75,7 @@ export const prisma = new Proxy({} as PrismaClient, {
       value === undefined &&
       REQUIRED_DELEGATES.includes(prop as (typeof REQUIRED_DELEGATES)[number])
     ) {
-      throw new Error(STALE_PRISMA_MESSAGE);
+      throw staleError(client);
     }
     return value;
   },

@@ -9,7 +9,8 @@ export type GeminiChatMessage = {
  */
 export async function generateGeminiText(
   systemInstruction: string,
-  messages: GeminiChatMessage[]
+  messages: GeminiChatMessage[],
+  options?: { maxOutputTokens?: number; temperature?: number }
 ): Promise<string | null> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
@@ -32,8 +33,8 @@ export async function generateGeminiText(
         },
         contents,
         generationConfig: {
-          temperature: 0.45,
-          maxOutputTokens: 512,
+          temperature: options?.temperature ?? 0.45,
+          maxOutputTokens: options?.maxOutputTokens ?? 512,
         },
       }),
     });

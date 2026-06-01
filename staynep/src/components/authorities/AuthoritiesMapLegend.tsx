@@ -2,6 +2,8 @@ export default function AuthoritiesMapLegend() {
   const items = [
     { color: "bg-pink-500", ring: "ring-pink-200", label: "Travelers (GPS)" },
     { color: "bg-blue-600", ring: "ring-amber-300", label: "Registered hotels" },
+    { color: "bg-amber-500", ring: "ring-amber-200", label: "Top rated (4★+)" },
+    { color: "bg-cyan-500", ring: "ring-cyan-200", label: "Traffic corridors" },
     { color: "bg-red-600", ring: "ring-red-200", label: "Open reports" },
     { color: "bg-red-700", ring: "ring-red-400", label: "Emergency SOS", pulse: true },
   ];

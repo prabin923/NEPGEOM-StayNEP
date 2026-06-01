@@ -11,13 +11,26 @@ import {
   AuthSubmitButton,
 } from "@/components/auth/AuthField";
 import type { PortalRole } from "@/lib/roles";
+import AuthDivider from "@/components/auth/AuthDivider";
+import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
+import { useSearchParams } from "next/navigation";
 
 const initialState: AuthFormState = {};
 
 export default function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [role, setRole] = useState<PortalRole>("traveler");
+  const [organization, setOrganization] = useState("");
   const [state, formAction, pending] = useActionState(registerUser, initialState);
+
+  const oauthError = searchParams.get("error");
+  const oauthErrorMessage =
+    oauthError === "hotel_name_required"
+      ? "Enter your hotel name below, then use Sign up with Google."
+      : oauthError === "org_name_required"
+        ? "Enter your organization name below, then use Sign up with Google."
+        : null;
 
   useEffect(() => {
     if (!state.success) return;

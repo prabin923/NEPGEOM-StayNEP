@@ -13,6 +13,9 @@ import {
   Building2,
   Calendar,
   FileWarning,
+  Star,
+  Search,
+  Sparkles,
 } from "lucide-react";
 import type { Hotel } from "@/data/hotels";
 import type { Attraction } from "@/data/attractions";
@@ -29,9 +32,19 @@ import TravelerBookStay from "@/components/traveler/TravelerBookStay";
 import HotelMapAiBooking from "@/components/traveler/HotelMapAiBooking";
 import type { BookableProperty, TravelerBookingRow } from "@/lib/traveler-bookings";
 import type { RegisteredHotelMarker } from "@/lib/registered-hotels";
+import type { ReportMapMarker } from "@/lib/report-map-markers";
+import type { TrafficCorridor } from "@/lib/map-traffic";
+import type { CatalogMapHotel, MapHotelReview } from "@/lib/map-hotels";
+import { catalogHotelsForMap } from "@/lib/map-hotels";
 import { fromCatalogHotel, type MapHotelSelection } from "@/lib/map-hotel-selection";
 import { formatNpr } from "@/lib/traveler-bookings";
 import type { ReportCategory, ReportStatus } from "@prisma/client";
+import type { ReviewableBooking } from "@/lib/reviews";
+import TravelerReviewSection from "@/components/traveler/TravelerReviewSection";
+import HotelSearchPanel from "@/components/traveler/HotelSearchPanel";
+import TravelAiAssistant from "@/components/traveler/TravelAiAssistant";
+import type { SearchableHotel } from "@/lib/traveler-hotel-search";
+import { fromRegisteredHotel } from "@/lib/map-hotel-selection";
 import {
   PortalPageHeader,
   PortalCard,
@@ -47,14 +60,17 @@ import { hotels } from "@/data/hotels";
 import { attractions } from "@/data/attractions";
 import { emergencyServices } from "@/data/emergency";
 
-const LeafletMap = dynamic(() => import("@/components/LeafletMap"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-[380px] items-center justify-center rounded-[20px] border border-fog bg-mist text-steel">
-      Loading map…
-    </div>
-  ),
-});
+const MapTilerTourismMap = dynamic(
+  () => import("@/components/MapTilerTourismMap").then((mod) => mod.default),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-[380px] items-center justify-center rounded-[20px] border border-fog bg-mist text-steel">
+        Loading map…
+      </div>
+    ),
+  }
+);
 
 interface TravelerDashboardProps {
   myReports: {
@@ -74,6 +90,11 @@ interface TravelerDashboardProps {
   defaultCheckIn: string;
   defaultCheckOut: string;
   registeredHotels: RegisteredHotelMarker[];
+  reportMarkers?: ReportMapMarker[];
+  trafficCorridors?: TrafficCorridor[];
+  catalogHotels?: CatalogMapHotel[];
+  recentReviews?: MapHotelReview[];
+  reviewableBookings: ReviewableBooking[];
 }
 
 function isOpenReport(status: ReportStatus) {
@@ -88,6 +109,11 @@ export default function TravelerDashboard({
   defaultCheckIn,
   defaultCheckOut,
   registeredHotels,
+  reportMarkers = [],
+  trafficCorridors = [],
+  catalogHotels = catalogHotelsForMap(),
+  recentReviews = [],
+  reviewableBookings,
 }: TravelerDashboardProps) {
   const router = useRouter();
   const now = new Date();
@@ -117,6 +143,25 @@ export default function TravelerDashboard({
     );
   }, [selectedHotel]);
 
+  const handleSearchHotelSelect = (h: SearchableHotel) => {
+    if (h.propertyId) {
+      const reg = registeredHotels.find((r) => r.id === h.propertyId);
+      if (reg) {
+        setSelectedMapHotel(fromRegisteredHotel(reg));
+        setSelectedHotel(null);
+        setFlyToPosition([reg.lat, reg.lng]);
+      }
+    } else {
+      const catalog = hotels.find((c) => `static-${c.id}` === h.key);
+      if (catalog) {
+        setSelectedHotel(catalog);
+        setSelectedMapHotel(fromCatalogHotel(catalog, null));
+        setFlyToPosition([catalog.lat, catalog.lng]);
+      }
+    }
+    document.getElementById("map")?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <div className="space-y-8">
       <PortalPageHeader
@@ -128,9 +173,12 @@ export default function TravelerDashboard({
 
       <PortalQuickNav
         items={[
+          { label: "Search hotels", href: "#search", icon: Search },
+          { label: "Travel AI", href: "#assistant", icon: Sparkles },
           { label: "Book stay", href: "#book", icon: Building2 },
-          { label: "Safety & reports", href: "#safety", icon: Shield },
           { label: "Explore map", href: "#map", icon: MapPin },
+          { label: "Safety & reports", href: "#safety", icon: Shield },
+          { label: "Reviews", href: "#reviews", icon: Star },
           { label: "Transparency", href: "/transparency", icon: FileWarning },
         ]}
       />
@@ -159,6 +207,18 @@ export default function TravelerDashboard({
           value={String(bookableProperties.length)}
           label="Hotels available now"
         />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <PortalCard id="search" variant="snow">
+          <HotelSearchPanel
+            registeredHotels={registeredHotels}
+            onSelectHotel={handleSearchHotelSelect}
+          />
+        </PortalCard>
+        <PortalCard id="assistant" variant="mist">
+          <TravelAiAssistant />
+        </PortalCard>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-3">
@@ -259,8 +319,8 @@ export default function TravelerDashboard({
               selectedMapHotel ? "" : "lg:col-span-5"
             }`}
           >
-            <LeafletMap
-              hotels={hotels}
+            <MapTilerTourismMap
+              hotels={catalogHotels}
               attractions={attractions}
               emergencyServices={emergencyServices}
               filter="all"
@@ -282,6 +342,9 @@ export default function TravelerDashboard({
               nearbyRadiusKm={TRAVELER_NEARBY_RADIUS_KM}
               enableHotelExplore={!selectedMapHotel}
               registeredHotels={registeredHotels}
+              reportMarkers={reportMarkers}
+              trafficCorridors={trafficCorridors}
+              recentReviews={recentReviews}
               selectedMapHotelKey={selectedMapHotel?.key ?? null}
               onMapHotelSelect={(h) => {
                 setSelectedMapHotel(h);
@@ -329,6 +392,15 @@ export default function TravelerDashboard({
             </ul>
           </div>
         )}
+      </PortalCard>
+
+      <PortalCard id="reviews" variant="snow">
+        <PortalSectionTitle
+          title="Review your stays"
+          subtitle="Share your experiences at accommodations to help other travelers and support verified local hotels."
+          icon={Star}
+        />
+        <TravelerReviewSection initialBookings={reviewableBookings} />
       </PortalCard>
 
       <PortalCard id="saved" variant="snow">

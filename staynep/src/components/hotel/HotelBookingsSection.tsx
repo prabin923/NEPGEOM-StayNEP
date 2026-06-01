@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
-import { Calendar, Trash2 } from "lucide-react";
+import { Calendar, Trash2, Download } from "lucide-react";
 import {
   createBooking,
   updateBookingStatusForm,
@@ -26,6 +26,7 @@ import {
   portalTableRow,
 } from "@/components/portal/PortalUI";
 import type { BookingStatus } from "@prisma/client";
+import { generateCSV, downloadCSV } from "@/lib/csv-export";
 
 const initial: HotelActionState = {};
 
@@ -58,12 +59,58 @@ export default function HotelBookingsSection({
 
   const today = new Date().toISOString().slice(0, 10);
 
+  const handleExportCSV = () => {
+    const headers = [
+      "Guest",
+      "Email",
+      "Phone",
+      "Room Type",
+      "Units",
+      "Check-in",
+      "Check-out",
+      "Nights",
+      "Status",
+      "Notes",
+    ];
+
+    const rows = bookings.map((b) => {
+      const nights = bookingNights(b.checkIn, b.checkOut);
+      return [
+        b.guestName,
+        b.guestEmail ?? "",
+        b.guestPhone ?? "",
+        b.room.name,
+        String(b.units),
+        new Date(b.checkIn).toLocaleDateString(),
+        new Date(b.checkOut).toLocaleDateString(),
+        String(nights),
+        b.status,
+        b.notes ?? "",
+      ];
+    });
+
+    const csvContent = generateCSV(headers, rows);
+    downloadCSV(`bookings-export-${new Date().toISOString().slice(0, 10)}.csv`, csvContent);
+  };
+
   return (
     <div id="bookings" className="space-y-6">
       <PortalSectionTitle
         title="Bookings"
         subtitle="Record guest reservations and update status"
         icon={Calendar}
+        action={
+          bookings.length > 0 ? (
+            <button
+              type="button"
+              onClick={handleExportCSV}
+              className="inline-flex items-center gap-2 rounded-full border border-fog bg-snow px-3.5 py-2 text-xs font-semibold text-graphite hover:border-obsidian/20 hover:bg-mist transition cursor-pointer"
+            >
+              <Download className="h-3.5 w-3.5" />
+              <span>Export CSV</span>
+            </button>
+          ) : undefined
+        }
       />
 
       {createState.error && <AuthError message={createState.error} />}

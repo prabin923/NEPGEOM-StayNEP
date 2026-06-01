@@ -8,6 +8,7 @@ import Logo from "@/components/Logo";
 import SignOutButton from "@/components/auth/SignOutButton";
 import type { PortalRole } from "@/lib/roles";
 import { PORTALS, PORTAL_LIST } from "@/lib/roles";
+import ThemeToggle from "@/components/ThemeToggle";
 
 interface PortalShellProps {
   role: PortalRole;
@@ -142,6 +143,7 @@ export default function PortalShell({
             <h1 className="text-lg font-semibold text-obsidian">{config.title}</h1>
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <div className="hidden text-right sm:block">
               <p className="text-sm font-medium text-obsidian">{userLabel}</p>
               <p className="text-xs text-steel">{userMeta}</p>

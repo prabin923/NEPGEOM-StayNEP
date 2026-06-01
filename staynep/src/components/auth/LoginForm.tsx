@@ -9,6 +9,8 @@ import {
   AuthError,
   AuthSubmitButton,
 } from "@/components/auth/AuthField";
+import AuthDivider from "@/components/auth/AuthDivider";
+import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 
 const initialState: AuthFormState = {};
 
@@ -28,8 +30,16 @@ export default function LoginForm() {
     router.refresh();
   }, [state.success, state.redirectTo, callbackUrl, router]);
 
+  const oauthCallback =
+    callbackUrl?.startsWith("/") ? callbackUrl : "/dashboard";
+
   return (
-    <form action={formAction} className="space-y-5">
+    <div className="space-y-5">
+      <GoogleSignInButton mode="login" callbackUrl={oauthCallback} />
+
+      <AuthDivider />
+
+      <form action={formAction} className="space-y-5">
       {state.error && <AuthError message={state.error} />}
 
       <AuthField
@@ -61,5 +71,6 @@ export default function LoginForm() {
         </Link>
       </p>
     </form>
+    </div>
   );
 }

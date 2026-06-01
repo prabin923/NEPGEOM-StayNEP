@@ -2,14 +2,12 @@ import PortalShell from "@/components/portal/PortalShell";
 import AuthoritiesDashboard from "@/components/dashboards/AuthoritiesDashboard";
 import { roleMeta } from "@/lib/auth-helpers";
 import { requireRole } from "@/lib/require-role";
-import { fetchTouristMapMarkers } from "@/lib/traveler-locations";
-import { fetchRegisteredHotelMarkers } from "@/lib/registered-hotels";
+import { fetchMapOverview } from "@/lib/map-overview";
 import {
   fetchAuthorityLiveStats,
   fetchTouristReports,
   fetchTransparencySnapshot,
 } from "@/lib/tourist-reports";
-import { fetchOpenReportMarkers } from "@/lib/report-map-markers";
 import { prisma } from "@/lib/prisma";
 
 export const metadata = {
@@ -21,18 +19,24 @@ export default async function AuthoritiesPortalPage() {
   const session = await requireRole("AUTHORITIES");
   const user = session.user;
 
-  const [dbUser, tourists, registeredHotels, reportMarkers, reports, transparency] =
-    await Promise.all([
-      prisma.user.findUnique({
-        where: { id: user.id },
-        select: { organization: true, name: true },
-      }),
-      fetchTouristMapMarkers(),
-      fetchRegisteredHotelMarkers(),
-      fetchOpenReportMarkers(),
-      fetchTouristReports(),
-      fetchTransparencySnapshot(),
-    ]);
+  const [dbUser, mapOverview, reports, transparency] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: user.id },
+      select: { organization: true, name: true },
+    }),
+    fetchMapOverview(),
+    fetchTouristReports(),
+    fetchTransparencySnapshot(),
+  ]);
+
+  const {
+    tourists,
+    catalogHotels,
+    registeredHotels,
+    reports: reportMarkers,
+    traffic,
+    recentReviews,
+  } = mapOverview;
 
   const liveStats = await fetchAuthorityLiveStats(
     tourists.length,
@@ -49,6 +53,9 @@ export default async function AuthoritiesPortalPage() {
         tourists={tourists}
         registeredHotels={registeredHotels}
         reportMarkers={reportMarkers}
+        trafficCorridors={traffic}
+        catalogHotels={catalogHotels}
+        recentReviews={recentReviews}
         reports={reports}
         transparency={transparency}
         liveStats={liveStats}

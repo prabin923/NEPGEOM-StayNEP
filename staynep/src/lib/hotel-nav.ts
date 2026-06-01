@@ -14,6 +14,7 @@ import {
   BarChart3,
   Bell,
   Settings,
+  Star,
 } from "lucide-react";
 
 export interface HotelNavItem {
@@ -56,6 +57,7 @@ export const HOTEL_NAV_GROUPS: HotelNavGroup[] = [
     title: "Analytics & Control",
     items: [
       { label: "Reports", href: "/dashboard/hotel/reports", icon: BarChart3 },
+      { label: "Reviews", href: "/dashboard/hotel/reviews", icon: Star },
       { label: "Notifications", href: "/dashboard/hotel/notifications", icon: Bell },
       { label: "Settings", href: "/dashboard/hotel/settings", icon: Settings },
     ],

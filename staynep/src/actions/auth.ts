@@ -112,6 +112,12 @@ export async function loginUser(
   if (!user) {
     return { error: "Invalid email or password." };
   }
+  if (!user.passwordHash) {
+    return {
+      error:
+        "This account uses Google sign-in. Please click Continue with Google below.",
+    };
+  }
 
   try {
     await signIn("credentials", {

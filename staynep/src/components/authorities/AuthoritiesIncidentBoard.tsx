@@ -8,6 +8,7 @@ import {
   MapPin,
   User,
   Building2,
+  Download,
 } from "lucide-react";
 import {
   updateTouristReport,
@@ -23,6 +24,7 @@ import {
 import { StatusBadge } from "@/components/portal/PortalUI";
 import { hotelInputClass } from "@/components/hotel/hotel-form-styles";
 import type { ReportSeverity, ReportStatus } from "@prisma/client";
+import { generateCSV, downloadCSV } from "@/lib/csv-export";
 
 const initial: ReportActionState = {};
 
@@ -294,30 +296,81 @@ export default function AuthoritiesIncidentBoard({
     { id: "all", label: "All reports", count: reports.length },
   ];
 
+  const handleExportCSV = () => {
+    const headers = [
+      "Title",
+      "Category",
+      "Severity",
+      "Status",
+      "Is Emergency",
+      "District",
+      "Location Label",
+      "Latitude",
+      "Longitude",
+      "Reporter",
+      "Property",
+      "Created At",
+      "Resolved At",
+      "Resolution Note",
+    ];
+
+    const rows = filtered.map((r) => [
+      r.title,
+      r.category,
+      r.severity,
+      r.status,
+      r.isEmergency ? "YES" : "NO",
+      r.district ?? "",
+      r.locationLabel ?? "",
+      r.latitude ? String(r.latitude) : "",
+      r.longitude ? String(r.longitude) : "",
+      r.reporter.name,
+      r.property?.name ?? "",
+      new Date(r.createdAt).toLocaleString(),
+      r.resolvedAt ? new Date(r.resolvedAt).toLocaleString() : "",
+      r.resolutionNote ?? "",
+    ]);
+
+    const csvContent = generateCSV(headers, rows);
+    downloadCSV(`incidents-export-${new Date().toISOString().slice(0, 10)}.csv`, csvContent);
+  };
+
   return (
     <div>
-      <div className="mb-4 flex flex-wrap gap-2 border-b border-fog pb-4">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setTab(t.id)}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${
-              tab === t.id
-                ? "bg-obsidian text-snow"
-                : "bg-mist text-graphite hover:bg-fog"
-            }`}
-          >
-            {t.label}
-            <span
-              className={`rounded-full px-1.5 py-0.5 text-[11px] tabular-nums ${
-                tab === t.id ? "bg-white/20" : "bg-snow"
+      <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-fog pb-4">
+        <div className="flex flex-wrap gap-2">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTab(t.id)}
+              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${
+                tab === t.id
+                  ? "bg-obsidian text-snow"
+                  : "bg-mist text-graphite hover:bg-fog"
               }`}
             >
-              {t.count}
-            </span>
+              {t.label}
+              <span
+                className={`rounded-full px-1.5 py-0.5 text-[11px] tabular-nums ${
+                  tab === t.id ? "bg-white/20" : "bg-snow"
+                }`}
+              >
+                {t.count}
+              </span>
+            </button>
+          ))}
+        </div>
+        {filtered.length > 0 && (
+          <button
+            type="button"
+            onClick={handleExportCSV}
+            className="inline-flex items-center gap-2 rounded-full border border-fog bg-snow px-3.5 py-2 text-xs font-semibold text-graphite hover:border-obsidian/20 hover:bg-mist transition cursor-pointer"
+          >
+            <Download className="h-3.5 w-3.5" />
+            <span>Export CSV</span>
           </button>
-        ))}
+        )}
       </div>
 
       {filtered.length === 0 ? (

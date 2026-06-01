@@ -73,7 +73,8 @@ model User {
   id               String            @id @default(cuid())
   name             String
   email            String            @unique
-  passwordHash     String
+  passwordHash     String?
+  image            String?
   role             Role
   organization     String?
   createdAt        DateTime          @default(now())
@@ -81,6 +82,7 @@ model User {
   property         Property?
   travelerLocation TravelerLocation?
   touristReports   TouristReport[]
+  reviews          Review[]
 }
 
 model TravelerLocation {
@@ -104,6 +106,7 @@ model Property {
   phone              String?
   latitude           Float?
   longitude          Float?
+  amenities          String[]            @default([])
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   rooms              Room[]
@@ -115,6 +118,7 @@ model Property {
   invoices           Invoice[]
   notifications      Notification[]
   touristReports     TouristReport[]
+  reviews            Review[]
 }
 
 model Room {
@@ -147,6 +151,7 @@ model Booking {
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
   invoices   Invoice[]
+  review     Review?
 }
 
 model DiningOrder {
@@ -258,4 +263,17 @@ model TouristReport {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   resolvedAt      DateTime?
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  bookingId  String?  @unique
+  booking    Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
 }

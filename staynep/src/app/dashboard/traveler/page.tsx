@@ -8,8 +8,9 @@ import {
   fetchBookableProperties,
   fetchTravelerBookings,
 } from "@/lib/traveler-bookings";
-import { fetchRegisteredHotelMarkers } from "@/lib/registered-hotels";
+import { fetchMapOverview } from "@/lib/map-overview";
 import { prisma } from "@/lib/prisma";
+import { fetchReviewableBookings } from "@/lib/reviews";
 
 export const metadata = {
   title: "Traveler Portal — StayNEP",
@@ -22,18 +23,25 @@ export default async function TravelerPortalPage() {
   const email = user.email ?? "";
   const { checkIn, checkOut } = defaultBookingWindow();
 
-  const [myReports, properties, myBookings, bookableProperties, registeredHotels] =
-    await Promise.all([
-      fetchReportsForReporter(user.id!),
-      prisma.property.findMany({
-        select: { id: true, name: true, district: true },
-        orderBy: { name: "asc" },
-        take: 100,
-      }),
-      fetchTravelerBookings(email),
-      fetchBookableProperties(checkIn, checkOut),
-      fetchRegisteredHotelMarkers(),
-    ]);
+  const [
+    myReports,
+    properties,
+    myBookings,
+    bookableProperties,
+    mapOverview,
+    reviewableBookings,
+  ] = await Promise.all([
+    fetchReportsForReporter(user.id!),
+    prisma.property.findMany({
+      select: { id: true, name: true, district: true },
+      orderBy: { name: "asc" },
+      take: 100,
+    }),
+    fetchTravelerBookings(email),
+    fetchBookableProperties(checkIn, checkOut),
+    fetchMapOverview(),
+    fetchReviewableBookings(user.id!),
+  ]);
 
   return (
     <PortalShell
@@ -48,7 +56,12 @@ export default async function TravelerPortalPage() {
         bookableProperties={bookableProperties}
         defaultCheckIn={checkIn.toISOString().slice(0, 10)}
         defaultCheckOut={checkOut.toISOString().slice(0, 10)}
-        registeredHotels={registeredHotels}
+        registeredHotels={mapOverview.registeredHotels}
+        catalogHotels={mapOverview.catalogHotels}
+        recentReviews={mapOverview.recentReviews}
+        reportMarkers={mapOverview.reports}
+        trafficCorridors={mapOverview.traffic}
+        reviewableBookings={reviewableBookings}
       />
     </PortalShell>
   );

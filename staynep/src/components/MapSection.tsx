@@ -12,9 +12,23 @@ import {
   Layers,
   Navigation,
   Users,
+  AlertTriangle,
+  Route,
+  Star,
+  Flame,
+  RefreshCw,
 } from 'lucide-react';
 import type { TouristMapMarker } from '@/lib/traveler-locations';
 import type { RegisteredHotelMarker } from '@/lib/registered-hotels';
+import type { ReportMapMarker } from '@/lib/report-map-markers';
+import type { TrafficCorridor } from '@/lib/map-traffic';
+import type { MapOverviewSummary } from '@/lib/map-overview';
+import {
+  catalogHotelsForMap,
+  type CatalogMapHotel,
+  type MapHotelReview,
+} from '@/lib/map-hotels';
+import MapIntegrationRail from '@/components/map/MapIntegrationRail';
 import { gsap, prefersReducedMotion } from '@/lib/gsap';
 import { hotels } from '@/data/hotels';
 import { attractions } from '@/data/attractions';
@@ -27,11 +41,15 @@ import {
 } from '@/lib/geo';
 import NearbyDestinationsPanel from '@/components/map/NearbyDestinationsPanel';
 import TouristWeatherWidget from '@/components/weather/TouristWeatherWidget';
-import type { FilterType } from './LeafletMap';
+import type { FilterType } from '@/lib/map-types';
 
-const LeafletMap = dynamic(() => import('./LeafletMap'), {
+const MapTilerTourismMap = dynamic(() => import('./MapTilerTourismMap'), {
   ssr: false,
-  loading: () => <MapLoadingSkeleton />,
+  loading: () => (
+    <div className="staynep-map-root staynep-map-root--section flex items-center justify-center bg-mist">
+      <p className="text-sm text-steel font-cosmica">Loading map…</p>
+    </div>
+  ),
 });
 
 const filters: {
@@ -48,7 +66,7 @@ const filters: {
     shortLabel: 'All',
     icon: Layers,
     markerColor: 'bg-obsidian',
-    description: 'Hotels, attractions & emergency services',
+    description: 'Hotels, reviews, traffic, attractions & emergency',
   },
   {
     key: 'hotels',
@@ -56,7 +74,39 @@ const filters: {
     shortLabel: 'Hotels',
     icon: HotelIcon,
     markerColor: 'bg-blue-500',
-    description: 'Listings + StayNEP registered hotels',
+    description: 'Catalog listings + StayNEP partners (live)',
+  },
+  {
+    key: 'rated',
+    label: 'Top rated',
+    shortLabel: 'Rated',
+    icon: Star,
+    markerColor: 'bg-amber-500',
+    description: '4★+ hotels with traveler reviews',
+  },
+  {
+    key: 'traffic',
+    label: 'Road traffic',
+    shortLabel: 'Traffic',
+    icon: Route,
+    markerColor: 'bg-cyan-500',
+    description: 'Tourist corridors · delays & incidents',
+  },
+  {
+    key: 'incidents',
+    label: 'Incidents',
+    shortLabel: 'Reports',
+    icon: AlertTriangle,
+    markerColor: 'bg-red-600',
+    description: 'Open safety & transport reports',
+  },
+  {
+    key: 'heatmap',
+    label: 'Traveler heatmap',
+    shortLabel: 'Heatmap',
+    icon: Flame,
+    markerColor: 'bg-orange-400',
+    description: 'Live tourist density clusters',
   },
   {
     key: 'attractions',
@@ -102,14 +152,25 @@ const filters: {
 
 function countForFilter(
   key: FilterType,
-  touristCount: number,
-  registeredHotelCount: number
+  live: {
+    tourists: number;
+    registeredHotels: number;
+    reports: number;
+    traffic: number;
+    topRated: number;
+  }
 ): number {
   switch (key) {
     case 'tourists':
-      return touristCount;
+      return live.tourists;
     case 'hotels':
-      return hotels.length + registeredHotelCount;
+      return hotels.length + live.registeredHotels;
+    case 'rated':
+      return live.topRated;
+    case 'traffic':
+      return live.traffic;
+    case 'incidents':
+      return live.reports;
     case 'attractions':
       return attractions.length;
     case 'hospitals':
@@ -118,31 +179,35 @@ function countForFilter(
       return emergencyServices.filter((e) => e.type === 'police').length;
     case 'shelters':
       return emergencyServices.filter((e) => e.type === 'shelter').length;
+    case 'heatmap':
+      return live.tourists > 0 ? live.tourists : 0;
     default:
       return (
         hotels.length +
-        registeredHotelCount +
+        live.registeredHotels +
         attractions.length +
         emergencyServices.length +
-        touristCount
+        live.tourists +
+        live.reports +
+        live.traffic
       );
   }
 }
 
-function MapLoadingSkeleton() {
-  return (
-    <div className="flex h-[420px] flex-col sm:h-[500px] lg:h-[560px]">
-      <div className="flex items-center gap-2 border-b border-fog bg-fog/40 px-4 py-3">
-        <span className="h-3 w-3 rounded-full bg-pebble animate-pulse" />
-        <span className="h-3 w-3 rounded-full bg-pebble animate-pulse" />
-        <span className="h-3 w-3 rounded-full bg-pebble animate-pulse" />
-        <span className="ml-2 h-3 w-32 rounded-full bg-pebble animate-pulse" />
-      </div>
-      <div className="flex flex-1 items-center justify-center bg-mist">
-        <p className="text-sm text-steel font-cosmica">Loading map…</p>
-      </div>
-    </div>
-  );
+const MAP_REFRESH_MS = 45_000;
+
+async function loadMapOverview(): Promise<{
+  tourists: TouristMapMarker[];
+  catalogHotels: CatalogMapHotel[];
+  registeredHotels: RegisteredHotelMarker[];
+  recentReviews: MapHotelReview[];
+  reports: ReportMapMarker[];
+  traffic: TrafficCorridor[];
+  summary: MapOverviewSummary;
+} | null> {
+  const res = await fetch('/api/map/overview', { cache: 'no-store' });
+  if (!res.ok) return null;
+  return res.json();
 }
 
 export default function MapSection() {
@@ -155,28 +220,56 @@ export default function MapSection() {
   const [registeredHotels, setRegisteredHotels] = useState<RegisteredHotelMarker[]>(
     []
   );
+  const [catalogHotels, setCatalogHotels] = useState<CatalogMapHotel[]>(catalogHotelsForMap);
+  const [reportMarkers, setReportMarkers] = useState<ReportMapMarker[]>([]);
+  const [trafficCorridors, setTrafficCorridors] = useState<TrafficCorridor[]>([]);
+  const [recentReviews, setRecentReviews] = useState<MapHotelReview[]>([]);
+  const [summary, setSummary] = useState<MapOverviewSummary | null>(null);
+  const [mapLoading, setMapLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+  const [highlightTrafficId, setHighlightTrafficId] = useState<string | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
   const countRef = useRef<HTMLSpanElement>(null);
 
+  const liveCounts = useMemo(
+    () => ({
+      tourists: tourists.length,
+      registeredHotels: registeredHotels.length,
+      reports: reportMarkers.length,
+      traffic: trafficCorridors.length,
+      topRated: summary?.topRatedCount ?? 0,
+    }),
+    [tourists.length, registeredHotels.length, reportMarkers.length, trafficCorridors.length, summary?.topRatedCount]
+  );
+
   useEffect(() => {
-    Promise.all([
-      fetch("/api/travelers/locations").then((r) => r.json()),
-      fetch("/api/hotels/locations").then((r) => r.json()),
-    ])
-      .then(([travelersData, hotelsData]) => {
-        setTourists(travelersData.tourists ?? []);
-        setRegisteredHotels(hotelsData.hotels ?? []);
-      })
-      .catch(() => {
-        setTourists([]);
-        setRegisteredHotels([]);
-      });
+    let cancelled = false;
+
+    const refresh = async () => {
+      const data = await loadMapOverview();
+      if (cancelled || !data) return;
+      setTourists(data.tourists ?? []);
+      if (data.catalogHotels?.length) setCatalogHotels(data.catalogHotels);
+      setRegisteredHotels(data.registeredHotels ?? []);
+      setRecentReviews(data.recentReviews ?? []);
+      setReportMarkers(data.reports ?? []);
+      setTrafficCorridors(data.traffic ?? []);
+      setSummary(data.summary ?? null);
+      setLastRefresh(new Date());
+      setMapLoading(false);
+    };
+
+    void refresh();
+    const interval = window.setInterval(refresh, MAP_REFRESH_MS);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
   }, []);
 
   const totalCount = useMemo(
-    () =>
-      countForFilter(activeFilter, tourists.length, registeredHotels.length),
-    [activeFilter, tourists.length, registeredHotels.length]
+    () => countForFilter(activeFilter, liveCounts),
+    [activeFilter, liveCounts]
   );
   const activeMeta = filters.find((f) => f.key === activeFilter)!;
 
@@ -191,11 +284,16 @@ export default function MapSection() {
 
   const handleFilterChange = (key: FilterType) => {
     setActiveFilter(key);
-    if (key !== 'all' && key !== 'hotels') {
+    if (key !== 'all' && key !== 'hotels' && key !== 'rated') {
       setSelectedHotel(null);
       setFlyToPosition(null);
     }
-    if (key === 'tourists') {
+    if (
+      key === 'tourists' ||
+      key === 'traffic' ||
+      key === 'incidents' ||
+      key === 'heatmap'
+    ) {
       setSelectedHotel(null);
       setFlyToPosition(null);
     }
@@ -211,12 +309,26 @@ export default function MapSection() {
 
   const provinceStats = useMemo(
     () => [
-      { label: 'Provinces', value: '7' },
-      { label: 'Hotels', value: String(hotels.length) },
-      { label: 'Attractions', value: String(attractions.length) },
-      { label: 'Emergency', value: String(emergencyServices.length) },
+      {
+        label: 'Hotels',
+        value: String(summary?.totalHotels ?? hotels.length + registeredHotels.length),
+      },
+      {
+        label: 'Reviews',
+        value: mapLoading
+          ? '…'
+          : String(summary?.stayNepReviewCount ?? recentReviews.length),
+      },
+      {
+        label: 'Traffic',
+        value: mapLoading ? '…' : String(summary?.trafficCorridors ?? trafficCorridors.length),
+      },
+      {
+        label: 'Travelers',
+        value: mapLoading ? '…' : String(summary?.tourists ?? tourists.length),
+      },
     ],
-    []
+    [summary, registeredHotels.length, tourists.length, reportMarkers.length, recentReviews.length, trafficCorridors.length, mapLoading]
   );
 
   useEffect(() => {
@@ -235,6 +347,7 @@ export default function MapSection() {
         duration: 0.45,
         stagger: 0.06,
         ease: 'power2.out',
+        clearProps: 'opacity,transform',
       });
 
       gsap.from('[data-map-stat]', {
@@ -283,9 +396,9 @@ export default function MapSection() {
             <span className="text-ash">Network</span>
           </h2>
           <p className="mt-4 text-[16px] leading-relaxed text-steel font-cosmica">
-            Zoom in for street-level detail, then select a hotel to discover
-            travel destinations within {TRAVELER_NEARBY_RADIUS_KM} km of your
-            stay.
+            Live hotels with ratings, road traffic on major tourist corridors,
+            traveler GPS, safety reports, and emergency services — refreshed
+            every 45 seconds.
           </p>
         </div>
 
@@ -333,11 +446,11 @@ export default function MapSection() {
           })}
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[272px_1fr]">
+        <div className="grid min-w-0 gap-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start">
           {/* Sidebar — desktop */}
           <aside
             data-map-sidebar
-            className="hidden flex-col gap-4 lg:flex"
+            className="hidden w-full flex-col gap-3 lg:sticky lg:top-24 lg:flex lg:max-h-[calc(100vh-7rem)] lg:self-start"
           >
             {selectedHotel ? (
               <div className="space-y-4">
@@ -358,16 +471,38 @@ export default function MapSection() {
                 />
               </div>
             ) : (
-              <div className="rounded-[28px] border border-fog bg-snow p-5">
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-steel">
-                  Traveler tip
-                </p>
-                <p className="mt-2 text-sm leading-relaxed text-steel font-cosmica">
-                  Click any hotel on the map to see destinations within{' '}
-                  {TRAVELER_NEARBY_RADIUS_KM} km. Zoom up to level 18 for
-                  neighbourhood detail.
-                </p>
-              </div>
+              <>
+                <div className="rounded-[28px] border border-fog bg-snow p-5">
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-steel">
+                    Live intelligence
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed text-steel font-cosmica">
+                    All hotels, StayNEP reviews, and road traffic refresh every
+                    45s. Click a hotel or corridor for details.
+                  </p>
+                </div>
+                <MapIntegrationRail
+                  filter={activeFilter}
+                  catalogHotels={catalogHotels}
+                  registeredHotels={registeredHotels}
+                  recentReviews={recentReviews}
+                  traffic={trafficCorridors}
+                  trafficUpdatedAt={summary?.trafficUpdatedAt}
+                  onSelectHotel={(lat, lng) => {
+                    setHighlightTrafficId(null);
+                    setFlyToPosition([lat, lng]);
+                    const match = catalogHotels.find(
+                      (h) => h.lat === lat && h.lng === lng
+                    );
+                    if (match) handleHotelSelect(match);
+                    else setSelectedHotel(null);
+                  }}
+                  onSelectTraffic={(id) => {
+                    setHighlightTrafficId(id);
+                    setActiveFilter('traffic');
+                  }}
+                />
+              </>
             )}
 
             <div className="rounded-[28px] border border-fog bg-snow p-5">
@@ -393,14 +528,13 @@ export default function MapSection() {
               </div>
             </div>
 
-            <nav className="flex flex-col gap-1.5" aria-label="Map filters">
+            <nav
+              className="flex max-h-[min(340px,calc(100vh-22rem))] flex-col gap-1.5 overflow-y-auto overscroll-contain rounded-[20px] pr-0.5"
+              aria-label="Map filters"
+            >
               {filters.map(({ key, label, icon: Icon, markerColor }) => {
                 const isActive = activeFilter === key;
-                const count = countForFilter(
-                  key,
-                  tourists.length,
-                  registeredHotels.length
-                );
+                const count = countForFilter(key, liveCounts);
                 return (
                   <button
                     key={key}
@@ -441,17 +575,17 @@ export default function MapSection() {
               })}
             </nav>
 
-            <div className="rounded-[28px] border border-fog bg-fog/60 p-4">
-              <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-steel">
+            <div className="shrink-0 rounded-[20px] border border-fog bg-fog/50 px-4 py-3">
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-steel">
                 Legend
               </p>
-              <ul className="space-y-2.5">
-                {filters.slice(1).map(({ label, markerColor }) => (
+              <ul className="flex flex-wrap gap-x-3 gap-y-1.5">
+                {filters.slice(1, 8).map(({ label, markerColor }) => (
                   <li
                     key={label}
-                    className="flex items-center gap-2 text-xs text-graphite font-cosmica"
+                    className="inline-flex items-center gap-1.5 text-[11px] text-graphite font-cosmica"
                   >
-                    <span className={`h-2 w-2 rounded-full ${markerColor}`} />
+                    <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${markerColor}`} />
                     {label}
                   </li>
                 ))}
@@ -462,7 +596,7 @@ export default function MapSection() {
           {/* Map panel */}
           <div
             data-gsap="map-panel"
-            className="overflow-hidden rounded-[36px] border border-fog bg-snow shadow-sm"
+            className="min-w-0 w-full shrink-0 self-start overflow-hidden rounded-[36px] border border-fog bg-snow shadow-sm"
           >
             {/* Toolbar */}
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-fog bg-fog/30 px-4 py-3 sm:px-5">
@@ -474,7 +608,7 @@ export default function MapSection() {
                   StayNEP — Tourism Intelligence Map
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span
                   className={`h-2 w-2 rounded-full ${activeMeta.markerColor} animate-pulse-dot`}
                 />
@@ -483,11 +617,21 @@ export default function MapSection() {
                   <span className="mx-1 text-steel">·</span>
                   <span className="text-obsidian">{totalCount}</span>
                 </span>
+                {lastRefresh && (
+                  <span className="inline-flex items-center gap-1 text-[10px] text-steel font-cosmica">
+                    <RefreshCw className={`h-3 w-3 ${mapLoading ? 'animate-spin' : ''}`} />
+                    {lastRefresh.toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </span>
+                )}
               </div>
             </div>
 
-            <div className="relative">
-              <LeafletMap
+            <div className="relative shrink-0 overflow-hidden bg-mist">
+              <MapTilerTourismMap
+                sectionLayout
                 hotels={hotels}
                 attractions={attractions}
                 emergencyServices={emergencyServices}
@@ -499,9 +643,11 @@ export default function MapSection() {
                 enableHotelExplore={activeFilter !== 'tourists'}
                 tourists={tourists}
                 registeredHotels={registeredHotels}
+                reportMarkers={reportMarkers}
+                trafficCorridors={trafficCorridors}
               />
 
-              <div className="pointer-events-none absolute bottom-4 left-4 z-[400] max-w-[min(100%,280px)] rounded-[16px] border border-fog bg-snow/95 px-3 py-2 shadow-sm backdrop-blur-md">
+              <div className="pointer-events-none absolute bottom-12 left-4 z-[1000] max-w-[min(calc(100%-5rem),280px)] rounded-[16px] border border-fog bg-snow/95 px-3 py-2 shadow-sm backdrop-blur-md">
                 <p className="flex items-center gap-2 text-[11px] font-medium text-steel font-cosmica">
                   <Navigation className="h-3.5 w-3.5 shrink-0 text-graphite" />
                   {selectedHotel

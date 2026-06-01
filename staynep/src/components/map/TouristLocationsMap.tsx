@@ -5,25 +5,41 @@ import dynamic from "next/dynamic";
 import type { TouristMapMarker } from "@/lib/traveler-locations";
 import type { RegisteredHotelMarker } from "@/lib/registered-hotels";
 import type { ReportMapMarker } from "@/lib/report-map-markers";
+import type { TrafficCorridor } from "@/lib/map-traffic";
+import type { CatalogMapHotel, MapHotelReview } from "@/lib/map-hotels";
+import { catalogHotelsForMap } from "@/lib/map-hotels";
 import { hotels } from "@/data/hotels";
 import { attractions } from "@/data/attractions";
 import { emergencyServices } from "@/data/emergency";
-import type { FilterType } from "@/components/LeafletMap";
-import { AlertTriangle, Building2, Loader2, Users } from "lucide-react";
+import type { FilterType } from "@/lib/map-types";
+import {
+  AlertTriangle,
+  Building2,
+  Loader2,
+  Route,
+  Star,
+  Users,
+} from "lucide-react";
 
-const LeafletMap = dynamic(() => import("@/components/LeafletMap"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-[420px] items-center justify-center bg-mist text-sm text-steel">
-      Loading map…
-    </div>
-  ),
-});
+const MapTilerTourismMap = dynamic(
+  () => import("@/components/MapTilerTourismMap").then((mod) => mod.default),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="staynep-map-root flex items-center justify-center bg-mist text-sm text-steel">
+        Loading map…
+      </div>
+    ),
+  }
+);
 
 interface TouristLocationsMapProps {
   initialTourists?: TouristMapMarker[];
   initialHotels?: RegisteredHotelMarker[];
   initialReports?: ReportMapMarker[];
+  initialTraffic?: TrafficCorridor[];
+  initialCatalogHotels?: CatalogMapHotel[];
+  initialRecentReviews?: MapHotelReview[];
   defaultFilter?: FilterType;
   heightClass?: string;
   showTouristCount?: boolean;
@@ -35,6 +51,9 @@ export default function TouristLocationsMap({
   initialTourists,
   initialHotels,
   initialReports,
+  initialTraffic,
+  initialCatalogHotels,
+  initialRecentReviews,
   defaultFilter = "tourists",
   heightClass,
   showTouristCount = true,
@@ -52,46 +71,66 @@ export default function TouristLocationsMap({
   const [reportMarkers, setReportMarkers] = useState<ReportMapMarker[]>(
     initialReports ?? []
   );
+  const [trafficCorridors, setTrafficCorridors] = useState<TrafficCorridor[]>(
+    initialTraffic ?? []
+  );
+  const [catalogHotels, setCatalogHotels] = useState<CatalogMapHotel[]>(
+    initialCatalogHotels ?? catalogHotelsForMap()
+  );
+  const [recentReviews, setRecentReviews] = useState<MapHotelReview[]>(
+    initialRecentReviews ?? []
+  );
   const [loading, setLoading] = useState(
-    !(initialTourists && initialHotels && initialReports)
+    !(initialTourists && initialHotels && initialReports && initialTraffic)
   );
   const [filter, setFilter] = useState<FilterType>(defaultFilter);
 
   useEffect(() => {
-    if (initialTourists && initialHotels && initialReports) return;
+    if (
+      initialTourists &&
+      initialHotels &&
+      initialReports &&
+      initialTraffic
+    ) {
+      return;
+    }
 
     let cancelled = false;
     (async () => {
       try {
-        const [travelersRes, hotelsRes, reportsRes] = await Promise.all([
-          initialTourists
-            ? Promise.resolve(null)
-            : fetch("/api/travelers/locations"),
-          initialHotels ? Promise.resolve(null) : fetch("/api/hotels/locations"),
-          initialReports ? Promise.resolve(null) : fetch("/api/reports/locations"),
-        ]);
+        const res = await fetch("/api/map/overview", { cache: "no-store" });
+        if (cancelled || !res.ok) return;
+        const data = await res.json();
         if (cancelled) return;
-        if (travelersRes) {
-          const data = await travelersRes.json();
-          if (travelersRes.ok) setTourists(data.tourists ?? []);
-        }
-        if (hotelsRes) {
-          const data = await hotelsRes.json();
-          if (hotelsRes.ok) setRegisteredHotels(data.hotels ?? []);
-        }
-        if (reportsRes) {
-          const data = await reportsRes.json();
-          if (reportsRes.ok) setReportMarkers(data.reports ?? []);
-        }
+        setTourists(data.tourists ?? []);
+        setRegisteredHotels(data.registeredHotels ?? []);
+        setReportMarkers(data.reports ?? []);
+        setTrafficCorridors(data.traffic ?? []);
+        if (data.catalogHotels?.length) setCatalogHotels(data.catalogHotels);
+        setRecentReviews(data.recentReviews ?? []);
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
 
+    const interval = window.setInterval(async () => {
+      const res = await fetch("/api/map/overview", { cache: "no-store" });
+      if (!res.ok || cancelled) return;
+      const data = await res.json();
+      if (cancelled) return;
+      setTourists(data.tourists ?? []);
+      setRegisteredHotels(data.registeredHotels ?? []);
+      setReportMarkers(data.reports ?? []);
+      setTrafficCorridors(data.traffic ?? []);
+      if (data.catalogHotels?.length) setCatalogHotels(data.catalogHotels);
+      setRecentReviews(data.recentReviews ?? []);
+    }, 45_000);
+
     return () => {
       cancelled = true;
+      window.clearInterval(interval);
     };
-  }, [initialTourists, initialHotels, initialReports]);
+  }, [initialTourists, initialHotels, initialReports, initialTraffic]);
 
   return (
     <div className="space-y-3">
@@ -115,14 +154,30 @@ export default function TouristLocationsMap({
                   <span className="font-semibold text-obsidian">
                     {registeredHotels.length}
                   </span>
-                  registered hotel{registeredHotels.length === 1 ? "" : "s"}
+                  registered
+                </span>
+                <span className="flex items-center gap-2">
+                  <Star className="h-4 w-4 text-amber-500" />
+                  <span className="font-semibold text-obsidian">
+                    {registeredHotels.filter(
+                      (h) => h.avgRating !== undefined && h.avgRating >= 4
+                    ).length}
+                  </span>
+                  rated 4★+
+                </span>
+                <span className="flex items-center gap-2">
+                  <Route className="h-4 w-4 text-cyan-600" />
+                  <span className="font-semibold text-obsidian">
+                    {trafficCorridors.length}
+                  </span>
+                  corridors
                 </span>
                 <span className="flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4 text-red-600" />
                   <span className="font-semibold text-obsidian">
                     {reportMarkers.length}
                   </span>
-                  open report{reportMarkers.length === 1 ? "" : "s"}
+                  reports
                 </span>
               </>
             )}
@@ -132,9 +187,12 @@ export default function TouristLocationsMap({
           {(
             [
               ["all", "All layers", null],
+              ["hotels", "Hotels", "border-blue-200 text-blue-800"],
+              ["rated", "Top rated", "border-amber-200 text-amber-800"],
+              ["traffic", "Traffic", "border-cyan-200 text-cyan-800"],
               ["incidents", "Incidents", "border-red-200 text-red-800"],
               ["tourists", "Travelers", "border-pink-200 text-pink-800"],
-              ["hotels", "Hotels", "border-blue-200 text-blue-800"],
+              ["heatmap", "Heatmap", "border-orange-200 text-orange-800"],
             ] as const
           ).map(([key, label, accent]) => (
             <button
@@ -160,15 +218,23 @@ export default function TouristLocationsMap({
       <div
         className={`overflow-hidden rounded-[20px] border border-fog bg-snow shadow-sm ${mapHeight}`}
       >
-        <LeafletMap
-          hotels={hotels}
+        <MapTilerTourismMap
+          fillContainer
+          hotels={catalogHotels}
           attractions={attractions}
           emergencyServices={emergencyServices}
           filter={filter}
           tourists={tourists}
           registeredHotels={registeredHotels}
           reportMarkers={reportMarkers}
-          enableHotelExplore={filter !== "tourists" && filter !== "incidents"}
+          trafficCorridors={trafficCorridors}
+          recentReviews={recentReviews}
+          enableHotelExplore={
+            filter !== "tourists" &&
+            filter !== "incidents" &&
+            filter !== "traffic" &&
+            filter !== "heatmap"
+          }
         />
       </div>
     </div>
