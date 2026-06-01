@@ -18,6 +18,8 @@ import {
   Sparkles,
   CloudSun,
   CalendarDays,
+  ShieldAlert,
+  Globe,
 } from "lucide-react";
 import type { Hotel } from "@/data/hotels";
 import type { Attraction } from "@/data/attractions";
@@ -63,6 +65,8 @@ import TravelAdvisoryPanel from "@/components/traveler/TravelAdvisoryPanel";
 import TouristWeatherBoard from "@/components/weather/TouristWeatherBoard";
 import { travelerWeatherHubs } from "@/data/saas-traveler";
 import FestivalCalendar from "@/components/traveler/FestivalCalendar";
+import TravelerStepEnrollment from "@/components/traveler/TravelerStepEnrollment";
+import ConsularDirectory from "@/components/traveler/ConsularDirectory";
 import { hotels } from "@/data/hotels";
 import { attractions } from "@/data/attractions";
 import { emergencyServices } from "@/data/emergency";
@@ -185,6 +189,8 @@ export default function TravelerDashboard({
           { label: "Book stay", href: "#book", icon: Building2 },
           { label: "Weather & AQI", href: "#weather", icon: CloudSun },
           { label: "Festivals", href: "#festivals", icon: CalendarDays },
+          { label: "STEP-Nepal", href: "#step-nepal", icon: ShieldAlert },
+          { label: "Embassies", href: "#embassies", icon: Globe },
           { label: "Explore map", href: "#map", icon: MapPin },
           { label: "Safety & reports", href: "#safety", icon: Shield },
           { label: "Reviews", href: "#reviews", icon: Star },
@@ -400,6 +406,20 @@ export default function TravelerDashboard({
           </div>
         )}
       </PortalCard>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <PortalCard id="step-nepal" variant="snow">
+          <TravelerStepEnrollment />
+        </PortalCard>
+        <PortalCard id="embassies" variant="snow">
+          <ConsularDirectory
+            onShowOnMap={(lat, lng) => {
+              setFlyToPosition([lat, lng]);
+              document.getElementById("map")?.scrollIntoView({ behavior: "smooth" });
+            }}
+          />
+        </PortalCard>
+      </div>
 
       <PortalCard id="reviews" variant="snow">
         <PortalSectionTitle
