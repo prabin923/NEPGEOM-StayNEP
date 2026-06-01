@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { MapPin, Loader2, RefreshCw } from "lucide-react";
 
 type Status = "idle" | "loading" | "shared" | "denied" | "error";
@@ -8,7 +8,6 @@ type Status = "idle" | "loading" | "shared" | "denied" | "error";
 export default function TravelerLocationReporter() {
   const [status, setStatus] = useState<Status>("idle");
   const [label, setLabel] = useState<string | null>(null);
-  const reported = useRef(false);
 
   function shareLocation() {
     if (!navigator.geolocation) {
@@ -41,14 +40,7 @@ export default function TravelerLocationReporter() {
     );
   }
 
-  useEffect(() => {
-    if (reported.current) return;
-    reported.current = true;
-    shareLocation();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount
-  }, []);
-
-  if (status === "loading" || status === "idle") {
+  if (status === "loading") {
     return (
       <div className="flex shrink-0 items-center gap-2 rounded-full border border-fog bg-snow px-4 py-2 text-xs text-steel shadow-sm">
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -72,10 +64,7 @@ export default function TravelerLocationReporter() {
     return (
       <button
         type="button"
-        onClick={() => {
-          reported.current = false;
-          shareLocation();
-        }}
+        onClick={shareLocation}
         className="flex shrink-0 items-center gap-2 rounded-full border border-fog bg-snow px-4 py-2 text-xs font-medium text-graphite shadow-sm hover:bg-mist"
       >
         <RefreshCw className="h-3.5 w-3.5" />
@@ -90,8 +79,12 @@ export default function TravelerLocationReporter() {
       onClick={shareLocation}
       className="flex shrink-0 items-center gap-2 rounded-full border border-fog bg-snow px-4 py-2 text-xs font-medium text-graphite shadow-sm hover:bg-mist"
     >
-      <RefreshCw className="h-3.5 w-3.5" />
-      Retry GPS
+      {status === "idle" ? (
+        <MapPin className="h-3.5 w-3.5" />
+      ) : (
+        <RefreshCw className="h-3.5 w-3.5" />
+      )}
+      {status === "idle" ? "Enable location" : "Retry GPS"}
     </button>
   );
 }

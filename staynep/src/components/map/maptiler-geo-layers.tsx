@@ -6,7 +6,7 @@ import type { MapRef } from "react-map-gl/maplibre";
 import type { TrafficCorridor } from "@/lib/map-traffic";
 import { trafficStatusColor } from "@/lib/map-traffic";
 import type { TouristMapMarker } from "@/lib/traveler-locations";
-import { circlePolygonGeoJson } from "@/lib/maptiler";
+import { circlePolygonGeoJson } from "@/lib/geoapify";
 
 export function TrafficGeoLayer({
   corridors,
@@ -100,7 +100,7 @@ export function TouristHeatmapLayer({
     const threshold = 0.15;
 
     tourists.forEach((t) => {
-      let cluster = clusters.find(
+      const cluster = clusters.find(
         (c) =>
           Math.abs(c.lat - t.lat) < threshold &&
           Math.abs(c.lng - t.lng) < threshold

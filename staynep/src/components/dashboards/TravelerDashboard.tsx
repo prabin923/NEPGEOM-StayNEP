@@ -16,6 +16,8 @@ import {
   Star,
   Search,
   Sparkles,
+  CloudSun,
+  CalendarDays,
 } from "lucide-react";
 import type { Hotel } from "@/data/hotels";
 import type { Attraction } from "@/data/attractions";
@@ -55,7 +57,12 @@ import {
   StatusBadge,
 } from "@/components/portal/PortalUI";
 import { REPORT_STATUS_LABELS } from "@/lib/tourist-reports";
-import { savedPlaces, travelerAlerts } from "@/data/saas-traveler";
+import { savedPlaces } from "@/data/saas-traveler";
+import { travelAdvisories } from "@/data/travel-advisories";
+import TravelAdvisoryPanel from "@/components/traveler/TravelAdvisoryPanel";
+import TouristWeatherBoard from "@/components/weather/TouristWeatherBoard";
+import { travelerWeatherHubs } from "@/data/saas-traveler";
+import FestivalCalendar from "@/components/traveler/FestivalCalendar";
 import { hotels } from "@/data/hotels";
 import { attractions } from "@/data/attractions";
 import { emergencyServices } from "@/data/emergency";
@@ -176,6 +183,8 @@ export default function TravelerDashboard({
           { label: "Search hotels", href: "#search", icon: Search },
           { label: "Travel AI", href: "#assistant", icon: Sparkles },
           { label: "Book stay", href: "#book", icon: Building2 },
+          { label: "Weather & AQI", href: "#weather", icon: CloudSun },
+          { label: "Festivals", href: "#festivals", icon: CalendarDays },
           { label: "Explore map", href: "#map", icon: MapPin },
           { label: "Safety & reports", href: "#safety", icon: Shield },
           { label: "Reviews", href: "#reviews", icon: Star },
@@ -270,27 +279,25 @@ export default function TravelerDashboard({
             </a>
           </PortalCard>
 
-          <PortalCard id="alerts" variant="snow">
-            <PortalSectionTitle title="Travel advisories" icon={Bell} />
-            <ul className="space-y-2">
-              {travelerAlerts.slice(0, 3).map((alert) => (
-                <li
-                  key={alert.id}
-                  className="rounded-[12px] border border-fog bg-mist/50 px-3 py-2.5"
-                >
-                  <p className="text-sm text-ink">{alert.message}</p>
-                  <p className="mt-0.5 text-[11px] text-steel">{alert.time}</p>
-                </li>
-              ))}
-            </ul>
+          <PortalCard id="advisories" variant="snow">
+            <TravelAdvisoryPanel advisories={travelAdvisories} />
           </PortalCard>
         </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div id="weather">
+          <TouristWeatherBoard locations={travelerWeatherHubs} />
+        </div>
+        <PortalCard id="festivals" variant="snow">
+          <FestivalCalendar />
+        </PortalCard>
       </div>
 
       <PortalCard id="map" variant="snow">
         <PortalSectionTitle
           title="Explore & book on the map"
-          subtitle="Click any hotel marker — Gemini AI books your stay and updates the hotel dashboard"
+          subtitle="Click any hotel marker — StayNEP AI books your stay and updates the hotel dashboard"
           icon={MapPin}
         />
         {selectedHotel && !selectedMapHotel && (

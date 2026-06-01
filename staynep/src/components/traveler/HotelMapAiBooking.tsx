@@ -163,7 +163,7 @@ export default function HotelMapAiBooking({
               <Bot className="h-4 w-4" />
             </span>
             <div>
-              <p className="text-sm font-semibold text-ink">Gemini booking AI</p>
+              <p className="text-sm font-semibold text-ink">StayNEP AI</p>
               <p className="truncate text-xs text-steel">{hotel.name}</p>
             </div>
           </div>
@@ -220,7 +220,7 @@ export default function HotelMapAiBooking({
         {loading && (
           <div className="flex items-center gap-2 text-xs text-steel">
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            Gemini is checking availability…
+            StayNEP AI is checking availability…
           </div>
         )}
         {error && (
@@ -257,7 +257,7 @@ export default function HotelMapAiBooking({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={
-              state?.bookingId ? "Booking complete" : "Message Gemini…"
+              state?.bookingId ? "Booking complete" : "Message StayNEP AI…"
             }
             disabled={loading || !state || !!state.bookingId}
             className="flex-1 rounded-full border border-fog bg-mist/50 px-4 py-2.5 text-sm outline-none focus:border-violet-400/50 disabled:opacity-50"

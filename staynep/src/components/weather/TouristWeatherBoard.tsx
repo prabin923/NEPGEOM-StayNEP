@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { CloudSun } from 'lucide-react';
 import TouristWeatherWidget from '@/components/weather/TouristWeatherWidget';
+import AirQualityWidget from '@/components/weather/AirQualityWidget';
 import { PortalSectionTitle } from '@/components/portal/PortalUI';
 
 export interface WeatherLocation {
@@ -20,8 +21,8 @@ interface TouristWeatherBoardProps {
 
 export default function TouristWeatherBoard({
   locations,
-  title = 'Weather for your trip',
-  subtitle = 'Live forecasts from Open-Meteo · updated every 30 minutes',
+  title = 'Weather & air quality for your trip',
+  subtitle = 'Live weather and air quality from Open-Meteo · updated every 30 minutes',
 }: TouristWeatherBoardProps) {
   const [activeId, setActiveId] = useState(locations[0]?.id ?? '');
 
@@ -52,13 +53,22 @@ export default function TouristWeatherBoard({
       </div>
 
       {active && (
-        <TouristWeatherWidget
-          key={active.id}
-          lat={active.lat}
-          lng={active.lng}
-          label={active.label}
-        />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <TouristWeatherWidget
+            key={`weather-${active.id}`}
+            lat={active.lat}
+            lng={active.lng}
+            label={active.label}
+          />
+          <AirQualityWidget
+            key={`aqi-${active.id}`}
+            lat={active.lat}
+            lng={active.lng}
+            label={active.label}
+          />
+        </div>
       )}
     </div>
   );
 }
+

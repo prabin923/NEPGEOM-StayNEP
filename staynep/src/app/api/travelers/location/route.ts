@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { upsertTravelerLocation } from "@/lib/traveler-locations";
+import { reverseGeoapifyLocation } from "@/lib/geoapify";
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -17,7 +18,7 @@ export async function POST(request: Request) {
 
   const lat = Number(body.lat);
   const lng = Number(body.lng);
-  const label =
+  let label =
     typeof body.label === "string" ? body.label.trim().slice(0, 120) : null;
 
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
@@ -28,6 +29,9 @@ export async function POST(request: Request) {
   }
 
   try {
+    if (!label) {
+      label = await reverseGeoapifyLocation(lat, lng);
+    }
     const row = await upsertTravelerLocation(
       session.user.id,
       lat,

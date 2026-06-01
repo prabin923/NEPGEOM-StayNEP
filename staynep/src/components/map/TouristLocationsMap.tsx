@@ -8,7 +8,6 @@ import type { ReportMapMarker } from "@/lib/report-map-markers";
 import type { TrafficCorridor } from "@/lib/map-traffic";
 import type { CatalogMapHotel, MapHotelReview } from "@/lib/map-hotels";
 import { catalogHotelsForMap } from "@/lib/map-hotels";
-import { hotels } from "@/data/hotels";
 import { attractions } from "@/data/attractions";
 import { emergencyServices } from "@/data/emergency";
 import type { FilterType } from "@/lib/map-types";

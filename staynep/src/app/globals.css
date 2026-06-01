@@ -210,7 +210,7 @@ body {
   animation: pulse-dot 2s ease-in-out infinite;
 }
 
-/* ─── MapTiler / MapLibre (StayNEP tourism map) ─── */
+/* ─── Geoapify / MapLibre (StayNEP tourism map) ─── */
 .staynep-map-root {
   position: relative;
   width: 100%;

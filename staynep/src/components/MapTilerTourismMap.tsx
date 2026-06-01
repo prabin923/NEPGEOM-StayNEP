@@ -27,11 +27,11 @@ import {
   TRAVELER_NEARBY_RADIUS_KM,
 } from "@/lib/geo";
 import {
-  hasMapTilerKey,
-  mapTilerStyleUrl,
+  geoapifyStyleUrl,
+  hasGeoapifyKey,
   NEPAL_DEFAULT_ZOOM,
   NEPAL_MAP_CENTER,
-} from "@/lib/maptiler";
+} from "@/lib/geoapify";
 import MapUnavailable from "@/components/map/MapUnavailable";
 import MapDotMarker from "@/components/map/MapDotMarker";
 import { trafficStatusColor } from "@/lib/map-traffic";
@@ -162,28 +162,37 @@ function MapPopupBody({
     const catalog = popup.hotel as CatalogMapHotel;
     const reviewCount =
       "reviewCount" in catalog ? catalog.reviewCount : undefined;
+    const isGeoapifyPlace = catalog.source === "geoapify";
     return (
       <>
         <h3 className="text-sm font-semibold text-obsidian">{popup.hotel.name}</h3>
         <p className="text-steel">{popup.hotel.district}</p>
-        <p className="mt-2">
-          <Stars rating={popup.hotel.rating} /> · {popup.hotel.priceRange}
-        </p>
-        {reviewCount !== undefined && (
+        {isGeoapifyPlace ? (
+          <p className="mt-2 text-xs text-graphite">
+            {popup.hotel.type} from Geoapify Places
+          </p>
+        ) : (
+          <p className="mt-2">
+            <Stars rating={popup.hotel.rating} /> · {popup.hotel.priceRange}
+          </p>
+        )}
+        {!isGeoapifyPlace && reviewCount !== undefined && (
           <p className="text-[10px] text-steel">
             {reviewCount.toLocaleString()} reference reviews · {catalog.reviewLabel ?? "catalog"}
           </p>
         )}
-        <p className="mt-1">
-          Rooms {popup.hotel.availableRooms}/{popup.hotel.totalRooms}
-        </p>
-        {onMapHotelSelect && (
+        {!isGeoapifyPlace && (
+          <p className="mt-1">
+            Rooms {popup.hotel.availableRooms}/{popup.hotel.totalRooms}
+          </p>
+        )}
+        {onMapHotelSelect && !isGeoapifyPlace && (
           <button
             type="button"
             className="mt-2 w-full rounded-full bg-violet-700 px-3 py-2 text-xs font-semibold text-white"
             onClick={() => onMapHotelSelect(fromCatalogHotel(popup.hotel, null))}
           >
-            Book with Gemini AI
+            Book with StayNEP AI
           </button>
         )}
         {enableHotelExplore && onHotelSelect && (
@@ -229,7 +238,7 @@ function MapPopupBody({
             className="mt-2 w-full rounded-full bg-violet-700 px-3 py-2 text-xs font-semibold text-white"
             onClick={() => onMapHotelSelect(fromRegisteredHotel(popup.hotel))}
           >
-            Book with Gemini AI
+            Book with StayNEP AI
           </button>
         )}
       </>
@@ -385,12 +394,15 @@ function MapTilerTourismMapInner(props: MapTilerTourismMapProps) {
     const corridor = trafficCorridors.find((c) => c.id === highlightTrafficId);
     if (!corridor) return;
     const mid = corridorMidpoint(corridor);
-    setPopup({ kind: "traffic", corridor });
+    const timeout = window.setTimeout(() => {
+      setPopup({ kind: "traffic", corridor });
+    }, 0);
     mapRef.current?.getMap()?.flyTo({
       center: [mid.lng, mid.lat],
       zoom: 9,
       duration: 900,
     });
+    return () => window.clearTimeout(timeout);
   }, [highlightTrafficId, trafficCorridors]);
 
   const popupLngLat = popup
@@ -412,8 +424,11 @@ function MapTilerTourismMapInner(props: MapTilerTourismMapProps) {
               : { lng: popup.report.lng, lat: popup.report.lat }
     : null;
 
-  const handleHotelClick = (hotel: Hotel) => {
+  const handleHotelClick = (hotel: Hotel | CatalogMapHotel) => {
     setPopup({ kind: "catalog", hotel });
+    if ("source" in hotel && hotel.source === "geoapify") {
+      return;
+    }
     if (onMapHotelSelect) {
       onMapHotelSelect(fromCatalogHotel(hotel, null));
       return;
@@ -434,7 +449,7 @@ function MapTilerTourismMapInner(props: MapTilerTourismMapProps) {
     <div className={`${rootClass} staynep-map h-full w-full`}>
       <Map
         ref={mapRef}
-        mapStyle={mapTilerStyleUrl()}
+        mapStyle={geoapifyStyleUrl()}
         initialViewState={{
           ...NEPAL_MAP_CENTER,
           zoom: NEPAL_DEFAULT_ZOOM,
@@ -645,28 +660,7 @@ function MapTilerTourismMapInner(props: MapTilerTourismMapProps) {
 }
 
 export default function MapTilerTourismMap(props: MapTilerTourismMapProps) {
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    setReady(true);
-  }, []);
-
-  const rootClass = mapRootClassName(
-    props.fillContainer ?? false,
-    props.sectionLayout ?? false
-  );
-
-  if (!ready) {
-    return (
-      <div className={rootClass} aria-hidden>
-        <div className="flex h-full w-full items-center justify-center bg-mist">
-          <p className="text-sm text-steel font-cosmica">Loading map…</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!hasMapTilerKey()) {
+  if (!hasGeoapifyKey()) {
     return (
       <MapUnavailable
         fillContainer={props.fillContainer}

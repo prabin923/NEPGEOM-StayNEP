@@ -370,7 +370,7 @@ export function initialAssistantMessage(
   hotel: { name: string; isStayNepPartner: boolean; partnerName?: string | null }
 ) {
   if (hotel.isStayNepPartner) {
-    return `Namaste! I'm StayNEP AI (Gemini). I'll help you book ${hotel.name} — confirmed bookings sync to the hotel instantly. When are you checking in?`;
+    return `Namaste! I'm StayNEP AI. I'll help you book ${hotel.name} — confirmed bookings sync to the hotel instantly. When are you checking in?`;
   }
   if (hotel.partnerName && hotel.partnerName !== hotel.name) {
     return `Namaste! You selected ${hotel.name}. I'll book your stay through our StayNEP partner ${hotel.partnerName} with live availability. What dates work for you?`;
