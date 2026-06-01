@@ -6,11 +6,13 @@ import path from "node:path";
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const fullClean = process.argv.includes("--full");
 
-try {
-  execSync("pkill -f 'staynep/.+next build' || true", { stdio: "ignore" });
-  execSync("pkill -f 'staynep/.+postcss.js' || true", { stdio: "ignore" });
-} catch {
-  // ignore
+if (!process.env.VERCEL && !process.env.CI) {
+  try {
+    execSync("pkill -f 'staynep/.+next build' || true", { stdio: "ignore" });
+    execSync("pkill -f 'staynep/.+postcss.js' || true", { stdio: "ignore" });
+  } catch {
+    // ignore
+  }
 }
 
 const lockFiles = [

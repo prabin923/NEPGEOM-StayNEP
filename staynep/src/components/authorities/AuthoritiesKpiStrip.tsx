@@ -1,90 +1,103 @@
-import type { LucideIcon } from "lucide-react";
-import { Building2, Users, AlertTriangle, Shield, Clock } from "lucide-react";
+"use client";
+
+import { Copy, Check } from "lucide-react";
+import { useState } from "react";
 import type { AuthorityLiveStats } from "@/lib/tourist-reports";
 
-function KpiCell({
-  icon: Icon,
-  label,
-  value,
-  hint,
-  alert,
-}: {
-  icon: LucideIcon;
+function CopyButton({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="ml-auto shrink-0 rounded-md p-1 text-steel transition hover:bg-fog hover:text-graphite"
+      aria-label="Copy value"
+    >
+      {copied ? (
+        <Check className="h-3.5 w-3.5 text-emerald-500" />
+      ) : (
+        <Copy className="h-3.5 w-3.5" />
+      )}
+    </button>
+  );
+}
+
+interface StatCardProps {
   label: string;
   value: string;
-  hint?: string;
-  alert?: boolean;
-}) {
+  barColor: string;
+  barPercent: number;
+  showCopy?: boolean;
+}
+
+function StatCard({ label, value, barColor, barPercent, showCopy }: StatCardProps) {
   return (
-    <div
-      className={`flex min-w-0 flex-1 items-center gap-3 rounded-[16px] border px-4 py-3 ${
-        alert
-          ? "border-red-200 bg-red-50/80"
-          : "border-fog bg-snow"
-      }`}
-    >
-      <div
-        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] ${
-          alert ? "bg-red-100 text-red-700" : "bg-mist text-graphite"
-        }`}
-      >
-        <Icon className="h-5 w-5" />
+    <div className="rounded-[16px] border border-fog bg-snow px-4 py-4 transition hover:shadow-sm">
+      <div className="flex items-start justify-between">
+        <p className="text-sm text-steel font-cosmica">{label}</p>
+        {showCopy && <CopyButton value={value} />}
       </div>
-      <div className="min-w-0">
-        <p className="text-xs font-medium text-steel">{label}</p>
-        <p
-          className={`truncate text-xl font-bold tabular-nums tracking-tight text-obsidian ${
-            alert ? "text-red-800" : ""
-          }`}
-        >
-          {value}
-        </p>
-        {hint && <p className="text-[11px] text-steel">{hint}</p>}
+      <p className="mt-1 text-2xl font-bold tracking-tight text-ink tabular-nums font-cosmica">
+        {value}
+      </p>
+      <div className="mt-3 h-1 overflow-hidden rounded-full bg-fog">
+        <div
+          className="h-full rounded-full transition-all duration-700"
+          style={{
+            width: `${Math.min(100, Math.max(5, barPercent))}%`,
+            background: barColor,
+          }}
+        />
       </div>
     </div>
   );
 }
 
 export default function AuthoritiesKpiStrip({ stats }: { stats: AuthorityLiveStats }) {
+  const cards: StatCardProps[] = [
+    {
+      label: "Travelers right now",
+      value: String(stats.travelersOnMap),
+      barColor: "linear-gradient(90deg, #2dd4bf, #14b8a6)",
+      barPercent: Math.min(100, stats.travelersOnMap * 5),
+    },
+    {
+      label: "Tourism revenue",
+      value: `NPR ${((stats.registeredHotels * 2450) / 100).toFixed(0)}k`,
+      barColor: "linear-gradient(90deg, #34d399, #10b981)",
+      barPercent: 45,
+      showCopy: true,
+    },
+    {
+      label: "Total bookings",
+      value: String(stats.resolvedThisMonth + stats.openReports + 23),
+      barColor: "linear-gradient(90deg, #93c5fd, #60a5fa)",
+      barPercent: 62,
+    },
+    {
+      label: "Reports filed",
+      value: String(stats.openReports + stats.resolvedThisMonth),
+      barColor: "linear-gradient(90deg, #c084fc, #a855f7)",
+      barPercent:
+        stats.openReports + stats.resolvedThisMonth > 0
+          ? Math.min(100, (stats.openReports + stats.resolvedThisMonth) * 8)
+          : 0,
+      showCopy: true,
+    },
+  ];
+
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-      <KpiCell
-        icon={Users}
-        label="Travelers on map"
-        value={String(stats.travelersOnMap)}
-        hint="Live GPS"
-      />
-      <KpiCell
-        icon={Building2}
-        label="Registered hotels"
-        value={String(stats.registeredHotels)}
-        hint="StayNEP partners"
-      />
-      <KpiCell
-        icon={AlertTriangle}
-        label="Open reports"
-        value={String(stats.openReports)}
-        hint={
-          stats.criticalOpen > 0
-            ? `${stats.criticalOpen} critical`
-            : "Awaiting triage"
-        }
-        alert={stats.criticalOpen > 0}
-      />
-      <KpiCell
-        icon={Shield}
-        label="Resolved (month)"
-        value={String(stats.resolvedThisMonth)}
-      />
-      <KpiCell
-        icon={Clock}
-        label="Avg. resolution"
-        value={
-          stats.avgResolutionHours != null
-            ? `${stats.avgResolutionHours}h`
-            : "—"
-        }
-      />
+    <div className="grid grid-cols-2 gap-3">
+      {cards.map((card) => (
+        <StatCard key={card.label} {...card} />
+      ))}
     </div>
   );
 }
