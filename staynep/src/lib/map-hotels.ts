@@ -3,7 +3,7 @@ import type { RegisteredHotelMarker } from "@/lib/registered-hotels";
 
 /** Catalog hotel prepared for map markers & API. */
 export type CatalogMapHotel = Hotel & {
-  source: "catalog";
+  source: "catalog" | "geoapify";
   reviewCount: number;
   reviewLabel: string;
 };

@@ -11,9 +11,12 @@ import { fetchRegisteredHotelMarkers } from "@/lib/registered-hotels";
 import { fetchTouristMapMarkers } from "@/lib/traveler-locations";
 import { prisma } from "@/lib/prisma";
 import {
-  computeTrafficCorridors,
   type TrafficCorridor,
 } from "@/lib/map-traffic";
+import {
+  fetchGeoapifyHotelsForNepal,
+  fetchGeoapifyTrafficCorridors,
+} from "@/lib/geoapify";
 import type { RegisteredHotelMarker } from "@/lib/registered-hotels";
 import type { ReportMapMarker } from "@/lib/report-map-markers";
 import type { TouristMapMarker } from "@/lib/traveler-locations";
@@ -91,32 +94,47 @@ export function countTopRatedHotels(
 }
 
 export async function fetchMapOverview(): Promise<MapOverview> {
-  const [tourists, registeredHotels, reports, recentReviews] = await Promise.all([
+  const [
+    tourists,
+    registeredHotels,
+    reports,
+    recentReviews,
+    geoapifyHotels,
+  ] = await Promise.all([
     fetchTouristMapMarkers(),
     fetchRegisteredHotelMarkers(),
     fetchOpenReportMarkers(),
     fetchRecentReviewsForMap(),
+    fetchGeoapifyHotelsForNepal(),
   ]);
 
-  const traffic = computeTrafficCorridors(reports);
+  const traffic = await fetchGeoapifyTrafficCorridors(reports);
   const slowOrCongested = traffic.filter(
     (t) => t.status === "slow" || t.status === "congested"
   ).length;
   const merged = mergeHotelLayers(registeredHotels);
+  const knownHotelNames = new Set([
+    ...merged.catalog.map((h) => h.name.toLowerCase().trim()),
+    ...merged.registered.map((h) => h.name.toLowerCase().trim()),
+  ]);
+  const uniqueGeoapifyHotels = geoapifyHotels.filter(
+    (h) => !knownHotelNames.has(h.name.toLowerCase().trim())
+  );
+  const catalogHotels = [...merged.catalog, ...uniqueGeoapifyHotels];
   const trafficUpdatedAt =
     traffic[0]?.updatedAt ?? new Date().toISOString();
 
   return {
     tourists,
-    catalogHotels: merged.catalog,
+    catalogHotels,
     registeredHotels: merged.registered,
     recentReviews,
     reports,
     traffic,
     summary: {
-      catalogHotels: merged.catalog.length,
+      catalogHotels: catalogHotels.length,
       registeredHotels: merged.registered.length,
-      totalHotels: merged.totalHotels,
+      totalHotels: merged.totalHotels + uniqueGeoapifyHotels.length,
       topRatedCount: countTopRatedHotels(registeredHotels),
       stayNepReviewCount: registeredHotels.reduce(
         (s, h) => s + (h.reviewCount ?? 0),
@@ -133,4 +151,3 @@ export async function fetchMapOverview(): Promise<MapOverview> {
     },
   };
 }
-
