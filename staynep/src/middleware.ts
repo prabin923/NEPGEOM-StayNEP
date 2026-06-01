@@ -1,12 +1,72 @@
-import { auth } from "@/lib/auth";
-import { dashboardPathForRole, prismaRoleToPortal } from "@/lib/auth-helpers";
-import { PORTALS } from "@/lib/roles";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-export default auth((req) => {
+/**
+ * Keep middleware bundle small for Vercel Edge:
+ * - Avoid importing `next-auth` or Prisma (they bloat the Edge bundle)
+ * - Decode the NextAuth JWT cookie payload to read `role`
+ */
+
+const DASHBOARD_BASE_BY_ROLE: Record<string, string> = {
+  TRAVELER: "/dashboard/traveler",
+  HOTEL: "/dashboard/hotel",
+  AUTHORITIES: "/dashboard/authorities",
+};
+
+const ALLOWED_DASHBOARD_PREFIXES = Object.values(DASHBOARD_BASE_BY_ROLE);
+
+function base64UrlDecodeToString(input: string): string | null {
+  try {
+    const normalized = input.replace(/-/g, "+").replace(/_/g, "/");
+    const padding = "=".repeat((4 - (normalized.length % 4)) % 4);
+    const decoded = atob(normalized + padding);
+    // JWT payload is UTF-8 JSON; this handles multibyte chars.
+    return decodeURIComponent(
+      decoded
+        .split("")
+        .map((c) => "%" + c.charCodeAt(0).toString(16).padStart(2, "0"))
+        .join("")
+    );
+  } catch {
+    return null;
+  }
+}
+
+function decodeJwtPayload(token: string): { role?: string } | null {
+  const parts = token.split(".");
+  if (parts.length < 2) return null;
+  const payloadJson = base64UrlDecodeToString(parts[1]);
+  if (!payloadJson) return null;
+  try {
+    return JSON.parse(payloadJson) as { role?: string };
+  } catch {
+    return null;
+  }
+}
+
+function getRoleFromRequest(req: NextRequest): string | null {
+  // NextAuth cookie names vary by browser/security settings.
+  const candidates = [
+    "__Secure-next-auth.session-token",
+    "__Host-next-auth.session-token",
+    "next-auth.session-token",
+  ];
+  const token =
+    candidates.map((name) => req.cookies.get(name)?.value).find(Boolean) ??
+    null;
+  if (!token) return null;
+
+  const payload = decodeJwtPayload(token);
+  const role = payload?.role;
+  return typeof role === "string" && DASHBOARD_BASE_BY_ROLE[role]
+    ? role
+    : null;
+}
+
+export default function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const session = req.auth;
-  const isLoggedIn = !!session?.user;
+  const userRole = getRoleFromRequest(req);
+  const isLoggedIn = !!userRole;
 
   const isAuthRoute =
     pathname.startsWith("/login") || pathname.startsWith("/signup");
@@ -14,7 +74,7 @@ export default auth((req) => {
 
   if (isAuthRoute && isLoggedIn) {
     return NextResponse.redirect(
-      new URL(dashboardPathForRole(session.user.role), req.url)
+      new URL(DASHBOARD_BASE_BY_ROLE[userRole as string] ?? "/dashboard", req.url)
     );
   }
 
@@ -28,30 +88,28 @@ export default auth((req) => {
     return NextResponse.redirect(loginUrl);
   }
 
-  const userRole = session.user.role;
-  const userPortal = prismaRoleToPortal(userRole);
-
   if (pathname === "/dashboard") {
     return NextResponse.next();
   }
 
-  const allowedPrefixes = Object.values(PORTALS).map((p) => p.basePath);
-  const matched = allowedPrefixes.find((base) => pathname.startsWith(base));
+  const matched = ALLOWED_DASHBOARD_PREFIXES.find((base) =>
+    pathname.startsWith(base)
+  );
 
   if (matched) {
-    const requiredPortal = Object.entries(PORTALS).find(
-      ([, config]) => config.basePath === matched
-    )?.[0];
+    const requiredRole =
+      Object.entries(DASHBOARD_BASE_BY_ROLE).find(([, base]) => base === matched)
+        ?.at(0) ?? null;
 
-    if (requiredPortal && requiredPortal !== userPortal) {
+    if (requiredRole && requiredRole !== userRole) {
       return NextResponse.redirect(
-        new URL(dashboardPathForRole(userRole), req.url)
+        new URL(DASHBOARD_BASE_BY_ROLE[userRole as string] ?? "/dashboard", req.url)
       );
-    }
+    } 
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: ["/dashboard/:path*", "/login", "/signup"],
