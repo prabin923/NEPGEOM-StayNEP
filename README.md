@@ -9,6 +9,28 @@ The platform transforms fragmented tourism and hospitality data into a centraliz
 
 ---
 
+## Quick start (developers)
+
+| Item | Location |
+|------|----------|
+| Next.js app | [`staynep/`](staynep/) |
+| Setup & deploy guide | [staynep/README.md](staynep/README.md) |
+| Environment template | [staynep/.env.example](staynep/.env.example) |
+
+```bash
+cd staynep
+cp .env.example .env    # fill in DATABASE_URL, AUTH_SECRET, etc.
+npm install
+npm run db:push
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). Sign up uses **email + password** (credentials auth via NextAuth).
+
+**Deploy on Vercel:** set project **Root Directory** to `staynep`, then add Production env vars (`DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`). Details in [staynep/README.md](staynep/README.md).
+
+---
+
 # 📌 Table of Contents
 
 - Overview
